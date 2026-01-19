@@ -58,11 +58,11 @@ Shopify is easier, fully managed. WooCommerce offers more control but requires t
 **Shopify vs BigCommerce**
 Similar capabilities and pricing. BigCommerce includes more features natively; Shopify relies more on apps. BigCommerce has no transaction fees regardless of payment processor.
 
-**Shopify vs Wix**
-Different purposes entirely. Shopify is commerce-first. Wix is a website builder that added commerce. Serious sellers choose Shopify.
-
 **Shopify vs Squarespace**
 Squarespace has prettier templates but weaker commerce tools. Choose Squarespace for design-heavy brands with small catalogs.
+
+**Shopify vs Magento**
+Magento is enterprise-grade with unlimited customization but requires developers. Shopify is the practical choice for most merchants.
 
 **Where Shopify excels:**
 - Largest app marketplace
@@ -298,7 +298,7 @@ Easiest learning curve. Good starting point, though you may outgrow it.
 **Market share by store count:**
 - WooCommerce: ~36% (mostly small stores)
 - Shopify: ~26% (fastest growing)
-- Others: Wix, Squarespace, BigCommerce split the rest
+- Others: Squarespace, BigCommerce, Magento split the rest
 
 **Among high-revenue stores:**
 Shopify dominates. Most serious, growth-focused merchants choose it. BigCommerce has strong B2B presence.
@@ -319,7 +319,7 @@ Shopify dominates. Most serious, growth-focused merchants choose it. BigCommerce
 - Strong email list
 - Customer reviews and social proof
 
-**Reality check:** I've seen six-figure stores on Wix and struggling stores on Shopify Plus. The platform enables success but doesn't cause it.
+**Reality check:** I've seen six-figure stores on basic platforms and struggling stores on Shopify Plus. The platform enables success but doesn't cause it.
 
 **My recommendation:** Use Shopify if you want what most growth-focused merchants use. But understand that your execution determines success, not your platform choice.""",
 
@@ -646,10 +646,7 @@ Only pay payment processor rates.
 3. **Shopify with Shopify Payments** - 0% additional
 Standard processing rates apply.
 
-4. **Wix** - 0% on ecommerce plans
-Standard processing only.
-
-5. **Squarespace** - 0% on Business and Commerce plans
+4. **Squarespace** - 0% on Business and Commerce plans
 3% on lower plans.
 
 **The Shopify catch:**
@@ -768,11 +765,11 @@ Winner: Shopify for convenience, WooCommerce for control.
 **Shopify vs BigCommerce**
 Very similar platforms. BigCommerce includes more features natively and charges no transaction fees. Shopify has a larger ecosystem. For most merchants, either works well.
 
-**Shopify vs Wix**
-Different categories entirely. Wix is a website builder with commerce added. Shopify is commerce-first. Choose based on your primary purpose.
-
 **Shopify vs Squarespace**
 Squarespace wins on design templates. Shopify wins on commerce features. If aesthetics are paramount and you have a small catalog, consider Squarespace.
+
+**Shopify vs Magento**
+Magento offers unlimited customization but requires developers. Shopify is more practical for most businesses.
 
 **Where Shopify genuinely excels:**
 - App marketplace depth
@@ -1067,7 +1064,7 @@ Trade-off: May outgrow it
 **What the data shows:**
 - WooCommerce: ~36% of all online stores (volume leader)
 - Shopify: ~26% (fastest growing, dominates high-revenue segment)
-- Wix/Squarespace: Combined ~15%
+- Squarespace/Others: Combined ~15%
 - BigCommerce: ~3%
 
 **What this actually means:**
@@ -1086,7 +1083,7 @@ Shopify dominates among merchants who are actively growing and investing in thei
 8. Customer reviews and social proof
 
 **The uncomfortable truth:**
-I've seen million-dollar stores on Wix and struggling stores on Shopify Plus. The platform enables success but doesn't create it.
+I've seen million-dollar stores on basic platforms and struggling stores on Shopify Plus. The platform enables success but doesn't create it.
 
 **What you should actually focus on:**
 - Product-market fit
@@ -1527,10 +1524,7 @@ Standard credit card rates apply. But...
 **4. Shopify with other processors - 0.5% to 2% extra**
 This is the catch. Use third-party processors and you pay platform fees ON TOP of processor fees.
 
-**5. Wix - 0% on business plans**
-Standard processing fees only.
-
-**6. Squarespace - 0% on Commerce plans**
+**5. Squarespace - 0% on Commerce plans**
 3% on lower-tier plans.
 
 **Payment processor rates (apply everywhere):**
