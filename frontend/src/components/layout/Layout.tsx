@@ -6,14 +6,20 @@ import { useApp } from '../../contexts/AppContext';
 
 export function Layout() {
   const breakpoint = useBreakpoint();
-  const { sidebarOpen, setSidebarOpen } = useApp();
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useApp();
 
   const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
 
   return (
     <div className="flex min-h-screen bg-atmosphere">
-      {/* Desktop: Static sidebar */}
-      {!isMobile && <Sidebar variant="static" />}
+      {/* Desktop: Collapsible sidebar */}
+      {!isMobile && (
+        <Sidebar
+          variant="static"
+          isCollapsed={!sidebarOpen}
+          onToggleCollapse={toggleSidebar}
+        />
+      )}
 
       {/* Mobile/Tablet: Overlay sidebar */}
       {isMobile && (

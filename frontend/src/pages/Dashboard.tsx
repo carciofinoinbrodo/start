@@ -1,13 +1,30 @@
-import { useState } from 'react';
-import { Eye, FileText, Globe, Hash } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Eye, FileText, Globe, Hash, Loader2 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
 import { DataTable } from '../components/ui/DataTable';
 import { TrendBadge, SentimentBadge } from '../components/ui/Badge';
 import { VisibilityChart } from '../components/charts/VisibilityChart';
 import { ChartDrilldownModal } from '../components/charts/ChartDrilldownModal';
-import { brands, visibilityData, sources, metrics } from '../data/mockData';
-import type { Brand, Source, DailyVisibility } from '../types';
+import { useBrands, useSources, useMetrics, useVisibilityData } from '../hooks/useApi';
+import type { DailyVisibility } from '../types';
+
+interface Brand {
+  id: string;
+  name: string;
+  type: 'primary' | 'competitor';
+  visibility: number;
+  trend: 'up' | 'down' | 'stable';
+  sentiment: 'positive' | 'neutral' | 'negative';
+  avgPosition: number;
+  color: string;
+}
+
+interface Source {
+  domain: string;
+  usage: number;
+  avgCitations: number;
+}
 
 const brandColumns = [
   {
@@ -93,6 +110,48 @@ const sourceColumns = [
 ];
 
 export function Dashboard() {
+  // Fetch real data from API
+  const { data: brandsData, loading: brandsLoading, error: brandsError } = useBrands();
+  const { data: sourcesData, loading: sourcesLoading } = useSources();
+  const { data: metricsData, loading: metricsLoading } = useMetrics();
+  const { data: visibilityData, loading: visibilityLoading } = useVisibilityData();
+
+  // Transform API data to match component expectations
+  const brands: Brand[] = useMemo(() => {
+    if (!brandsData) return [];
+    return brandsData.map(b => ({
+      id: b.id,
+      name: b.name,
+      type: b.type as 'primary' | 'competitor',
+      visibility: b.visibility,
+      trend: b.trend as 'up' | 'down' | 'stable',
+      sentiment: b.sentiment as 'positive' | 'neutral' | 'negative',
+      avgPosition: b.avgPosition,
+      color: b.color,
+    }));
+  }, [brandsData]);
+
+  const sources: Source[] = useMemo(() => {
+    if (!sourcesData) return [];
+    return sourcesData.map(s => ({
+      domain: s.domain,
+      usage: s.usage,
+      avgCitations: s.avgCitations,
+    }));
+  }, [sourcesData]);
+
+  const chartData: DailyVisibility[] = useMemo(() => {
+    if (!visibilityData) return [];
+    return visibilityData.map(d => ({
+      date: d.date,
+      shopify: d.shopify ?? 0,
+      woocommerce: d.woocommerce ?? 0,
+      bigcommerce: d.bigcommerce ?? 0,
+      wix: d.wix ?? 0,
+      squarespace: d.squarespace ?? 0,
+    }));
+  }, [visibilityData]);
+
   // State for chart interactions
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonBrands, setComparisonBrands] = useState<string[]>([]);
@@ -125,6 +184,42 @@ export function Dashboard() {
     setDrilldownData({ date, data });
   };
 
+  const isLoading = brandsLoading || sourcesLoading || metricsLoading || visibilityLoading;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Header
+          title="Dashboard"
+          subtitle="Track how AI search engines cite your brand vs competitors"
+        />
+        <div className="p-8 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[var(--accent-primary)]" />
+            <p className="text-[var(--text-muted)]">Loading dashboard data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (brandsError) {
+    return (
+      <div className="min-h-screen">
+        <Header
+          title="Dashboard"
+          subtitle="Track how AI search engines cite your brand vs competitors"
+        />
+        <div className="p-8">
+          <div className="glass-card p-12 text-center">
+            <p className="text-red-400 mb-2">Failed to load data</p>
+            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at localhost:8000</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <Header
@@ -137,29 +232,29 @@ export function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           <MetricCard
             label="Brand Visibility"
-            value={`${metrics.visibility.value}%`}
-            change={metrics.visibility.change}
+            value={`${metricsData?.visibility.value ?? 0}%`}
+            change={metricsData?.visibility.change ?? 0}
             changeLabel="%"
             icon={Eye}
             delay={250}
           />
           <MetricCard
             label="Prompts Tracked"
-            value={metrics.totalPrompts.value}
+            value={metricsData?.totalPrompts.value ?? 0}
             icon={FileText}
             delay={300}
           />
           <MetricCard
             label="Sources Cited"
-            value={metrics.totalSources.value}
-            change={metrics.totalSources.change}
+            value={metricsData?.totalSources.value ?? 0}
+            change={metricsData?.totalSources.change ?? 0}
             icon={Globe}
             delay={350}
           />
           <MetricCard
             label="Avg Position"
-            value={`#${metrics.avgPosition.value}`}
-            change={metrics.avgPosition.change}
+            value={`#${metricsData?.avgPosition.value ?? 0}`}
+            change={metricsData?.avgPosition.change ?? 0}
             icon={Hash}
             delay={400}
           />
@@ -168,7 +263,7 @@ export function Dashboard() {
         {/* Visibility Chart - now interactive */}
         <div className="mb-8">
           <VisibilityChart
-            data={visibilityData}
+            data={chartData}
             brands={brands}
             timeRange="30d"
             animationDelay={500}

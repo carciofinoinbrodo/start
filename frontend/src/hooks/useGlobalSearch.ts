@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
-import { prompts, brands, sources } from '../data/mockData';
+import { useBrands, usePrompts, useSources } from './useApi';
 import type { SearchResultGroup, SearchResult } from '../types';
 
 const MAX_RESULTS_PER_CATEGORY = 5;
 
 export function useGlobalSearch(query: string) {
+  const { data: prompts } = usePrompts();
+  const { data: brands } = useBrands();
+  const { data: sources } = useSources();
+
   const results = useMemo<SearchResultGroup[]>(() => {
     if (!query || query.length < 2) return [];
+    if (!prompts || !brands || !sources) return [];
 
     const normalizedQuery = query.toLowerCase().trim();
 
@@ -57,7 +62,7 @@ export function useGlobalSearch(query: string) {
     }
 
     return groups;
-  }, [query]);
+  }, [query, prompts, brands, sources]);
 
   const totalResults = results.reduce((sum, group) => sum + group.results.length, 0);
 

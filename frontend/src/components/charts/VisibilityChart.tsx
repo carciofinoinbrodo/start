@@ -119,9 +119,10 @@ export function VisibilityChart({
 
   const timeRanges: TimeRange[] = ['7d', '30d', '90d'];
 
-  const handleChartClick = (chartData: { activePayload?: Array<{ payload: DailyVisibility }> } | null) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleChartClick = (chartData: any) => {
     if (onDataPointClick && chartData?.activePayload?.[0]?.payload) {
-      const payload = chartData.activePayload[0].payload;
+      const payload = chartData.activePayload[0].payload as DailyVisibility;
       onDataPointClick(payload.date, payload);
     }
   };
