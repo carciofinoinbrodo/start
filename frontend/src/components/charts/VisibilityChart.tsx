@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { GitCompareArrows } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -10,19 +8,12 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { BrandComparisonToggle } from './BrandComparisonToggle';
 import type { DailyVisibility, Brand } from '../../types';
 
 interface VisibilityChartProps {
   data: DailyVisibility[];
   brands: Brand[];
-  timeRange?: '7d' | '30d' | '90d';
   animationDelay?: number;
-  comparisonMode?: boolean;
-  comparisonBrands?: string[];
-  onComparisonToggle?: () => void;
-  onBrandSelect?: (brandId: string) => void;
-  onDataPointClick?: (date: string, data: DailyVisibility) => void;
 }
 
 interface CustomTooltipProps {
@@ -87,46 +78,11 @@ function CustomLegend({ payload }: { payload?: LegendPayloadItem[] }) {
   );
 }
 
-type TimeRange = '7d' | '30d' | '90d';
-
 export function VisibilityChart({
   data,
   brands,
-  timeRange: initialTimeRange = '30d',
   animationDelay = 0,
-  comparisonMode = false,
-  comparisonBrands = [],
-  onComparisonToggle,
-  onBrandSelect,
-  onDataPointClick,
 }: VisibilityChartProps) {
-  const [timeRange, setTimeRange] = useState<TimeRange>(initialTimeRange);
-
-  const filteredData = (() => {
-    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    return data.slice(-days);
-  })();
-
-  // Filter brands when in comparison mode
-  const displayedBrands = comparisonMode && comparisonBrands.length > 0
-    ? brands.filter(b => comparisonBrands.includes(b.id))
-    : brands;
-
-  const formatXAxis = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const timeRanges: TimeRange[] = ['7d', '30d', '90d'];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleChartClick = (chartData: any) => {
-    if (onDataPointClick && chartData?.activePayload?.[0]?.payload) {
-      const payload = chartData.activePayload[0].payload as DailyVisibility;
-      onDataPointClick(payload.date, payload);
-    }
-  };
-
   return (
     <div
       className="chart-container animate-fade-in-up"
@@ -137,60 +93,15 @@ export function VisibilityChart({
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Visibility Trend</h3>
           <p className="text-sm text-[var(--text-muted)] mt-0.5">Brand visibility over time</p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Comparison Mode Toggle */}
-          {onComparisonToggle && (
-            <button
-              onClick={onComparisonToggle}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                comparisonMode
-                  ? 'bg-[var(--accent-glow)] text-[var(--accent-secondary)]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-bg)]'
-              }`}
-            >
-              <GitCompareArrows className="w-4 h-4" />
-              <span className="hidden sm:inline">Compare</span>
-            </button>
-          )}
-
-          {/* Time Range Selector */}
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-[var(--bg-elevated)]">
-            {timeRanges.map((range) => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                  timeRange === range
-                    ? 'bg-[var(--accent-glow)] text-[var(--accent-secondary)] shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                }`}
-              >
-                {range}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
-
-      {/* Brand Selection in Comparison Mode */}
-      {comparisonMode && onBrandSelect && (
-        <BrandComparisonToggle
-          brands={brands}
-          selectedBrands={comparisonBrands}
-          onToggle={onBrandSelect}
-          maxSelection={2}
-        />
-      )}
 
       <ResponsiveContainer width="100%" height={350}>
         <AreaChart
-          data={filteredData}
+          data={data}
           margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-          onClick={handleChartClick}
-          style={{ cursor: onDataPointClick ? 'pointer' : 'default' }}
         >
           <defs>
-            {displayedBrands.map((brand) => (
+            {brands.map((brand) => (
               <linearGradient key={brand.id} id={`color-${brand.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={brand.color} stopOpacity={0.3} />
                 <stop offset="100%" stopColor={brand.color} stopOpacity={0} />
@@ -204,7 +115,6 @@ export function VisibilityChart({
           />
           <XAxis
             dataKey="date"
-            tickFormatter={formatXAxis}
             tick={{ fill: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-mono)' }}
             tickLine={false}
             axisLine={{ stroke: 'var(--border-subtle)' }}
@@ -223,7 +133,7 @@ export function VisibilityChart({
             cursor={{ stroke: 'var(--accent-primary)', strokeOpacity: 0.3, strokeWidth: 1 }}
           />
           <Legend content={<CustomLegend />} />
-          {displayedBrands.map((brand) => (
+          {brands.map((brand) => (
             <Area
               key={brand.id}
               type="monotone"
@@ -241,7 +151,6 @@ export function VisibilityChart({
                 fill: brand.color,
                 style: {
                   filter: `drop-shadow(0 0 6px ${brand.color})`,
-                  cursor: 'pointer',
                 },
               }}
               animationDuration={800}
@@ -250,13 +159,6 @@ export function VisibilityChart({
           ))}
         </AreaChart>
       </ResponsiveContainer>
-
-      {/* Click hint */}
-      {onDataPointClick && (
-        <p className="text-xs text-[var(--text-muted)] text-center mt-4">
-          Click on the chart to see daily breakdown
-        </p>
-      )}
     </div>
   );
 }

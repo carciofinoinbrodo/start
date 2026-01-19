@@ -100,7 +100,7 @@ def get_run_data(session: Session, prompt: Prompt, brands: list[Brand]) -> RunRe
 
     mentioned_brands = [b for b in brand_responses if b.mentioned]
 
-    # Calculate visibility based on Shopify's position (primary brand)
+    # Calculate visibility based on Wix's position (primary brand)
     wix_mention = next((b for b in brand_responses if b.brandId == "wix"), None)
     if wix_mention and wix_mention.mentioned and wix_mention.position > 0:
         # Position 1 = 100%, Position 2 = 80%, Position 3 = 60%, etc.
@@ -108,11 +108,8 @@ def get_run_data(session: Session, prompt: Prompt, brands: list[Brand]) -> RunRe
     else:
         visibility = 0  # Not mentioned
 
-    avg_position = (
-        sum(b.position for b in mentioned_brands) / len(mentioned_brands)
-        if mentioned_brands
-        else 0
-    )
+    # Use Wix's position (primary brand), not average of all brands
+    avg_position = wix_mention.position if wix_mention and wix_mention.mentioned else 0
 
     return RunResponse(
         id=prompt.id,
@@ -129,45 +126,67 @@ def get_run_data(session: Session, prompt: Prompt, brands: list[Brand]) -> RunRe
 
 @app.get("/api/brands", response_model=list[BrandResponse])
 def get_brands(session: Session = Depends(get_session)):
-    """Get all brands with computed metrics"""
+    """Get all brands with computed metrics (January 2026 only, trend based on Jan vs Dec)"""
     brands = session.exec(select(Brand)).all()
-    # Count unique queries (not individual runs)
+
+    # Get prompts by month
     all_prompts = session.exec(select(Prompt)).all()
-    unique_queries = set(p.query for p in all_prompts)
-    total_queries = len(unique_queries)
+    jan_prompts = [p for p in all_prompts if p.scraped_at and p.scraped_at.strftime("%Y-%m") == "2026-01"]
+    dec_prompts = [p for p in all_prompts if p.scraped_at and p.scraped_at.strftime("%Y-%m") == "2025-12"]
+
+    jan_queries = set(p.query for p in jan_prompts)
+    dec_queries = set(p.query for p in dec_prompts)
+    total_jan_queries = len(jan_queries)
+    total_dec_queries = len(dec_queries)
 
     result = []
     for brand in brands:
-        mentions = session.exec(
-            select(PromptBrandMention).where(
-                PromptBrandMention.brand_id == brand.id,
-                PromptBrandMention.mentioned == True,
-            )
-        ).all()
+        # Get January mentions
+        jan_mentioned_queries = set()
+        jan_positions = []
+        jan_sentiments = []
 
-        # Count queries where brand was mentioned (not runs)
-        mentioned_queries = set()
-        for m in mentions:
-            prompt = session.get(Prompt, m.prompt_id)
-            if prompt:
-                mentioned_queries.add(prompt.query)
+        for prompt in jan_prompts:
+            mention = session.exec(
+                select(PromptBrandMention).where(
+                    PromptBrandMention.prompt_id == prompt.id,
+                    PromptBrandMention.brand_id == brand.id,
+                    PromptBrandMention.mentioned == True,
+                )
+            ).first()
+            if mention:
+                jan_mentioned_queries.add(prompt.query)
+                if mention.position:
+                    jan_positions.append(mention.position)
+                if mention.sentiment:
+                    jan_sentiments.append(mention.sentiment)
 
-        visibility = (len(mentioned_queries) / total_queries * 100) if total_queries > 0 else 0
-        avg_position = (
-            sum(m.position for m in mentions if m.position) / len(mentions)
-            if mentions
-            else 0
-        )
-        sentiments = [m.sentiment for m in mentions if m.sentiment]
+        jan_visibility = (len(jan_mentioned_queries) / total_jan_queries * 100) if total_jan_queries > 0 else 0
+        avg_position = sum(jan_positions) / len(jan_positions) if jan_positions else 0
         most_common_sentiment = (
-            Counter(sentiments).most_common(1)[0][0] if sentiments else "neutral"
+            Counter(jan_sentiments).most_common(1)[0][0] if jan_sentiments else "neutral"
         )
 
-        # Determine trend based on recent data (simplified)
+        # Get December mentions for trend calculation
+        dec_mentioned_queries = set()
+        for prompt in dec_prompts:
+            mention = session.exec(
+                select(PromptBrandMention).where(
+                    PromptBrandMention.prompt_id == prompt.id,
+                    PromptBrandMention.brand_id == brand.id,
+                    PromptBrandMention.mentioned == True,
+                )
+            ).first()
+            if mention:
+                dec_mentioned_queries.add(prompt.query)
+
+        dec_visibility = (len(dec_mentioned_queries) / total_dec_queries * 100) if total_dec_queries > 0 else 0
+
+        # Determine trend by comparing Jan vs Dec visibility
         trend = "stable"
-        if visibility > 50:
+        if jan_visibility > dec_visibility + 2:  # +2% threshold to avoid noise
             trend = "up"
-        elif visibility < 30:
+        elif jan_visibility < dec_visibility - 2:
             trend = "down"
 
         result.append(
@@ -176,7 +195,7 @@ def get_brands(session: Session = Depends(get_session)):
                 name=brand.name,
                 type=brand.type,
                 color=brand.color,
-                visibility=round(visibility, 1),
+                visibility=round(jan_visibility, 1),
                 avgPosition=round(avg_position, 1),
                 trend=trend,
                 sentiment=most_common_sentiment,
@@ -231,22 +250,19 @@ def get_prompts(session: Session = Depends(get_session)):
 
             mentioned_brands = [b for b in brand_responses if b.mentioned]
 
-            # Calculate visibility based on Shopify's position
+            # Calculate visibility based on Wix's position (primary brand)
             wix_mention = next((b for b in brand_responses if b.brandId == "wix"), None)
             if wix_mention and wix_mention.mentioned and wix_mention.position > 0:
                 visibility = max(0, 100 - (wix_mention.position - 1) * 20)
             else:
                 visibility = 0
 
-            avg_position = (
-                sum(b.position for b in mentioned_brands) / len(mentioned_brands)
-                if mentioned_brands
-                else 0
-            )
+            # Use Wix's position (primary brand), not average of all brands
+            wix_position = wix_mention.position if wix_mention and wix_mention.mentioned else 0
 
             all_visibilities.append(visibility)
-            if avg_position > 0:
-                all_positions.append(avg_position)
+            if wix_position > 0:
+                all_positions.append(wix_position)
             all_mentions_count.append(len(mentioned_brands))
 
         # Get brand data from latest run for display
@@ -384,91 +400,126 @@ def get_sources(session: Session = Depends(get_session)):
 
 @app.get("/api/metrics", response_model=DashboardMetricsResponse)
 def get_metrics(session: Session = Depends(get_session)):
-    """Get dashboard KPIs"""
-    # Count unique queries (not runs)
+    """Get dashboard KPIs with month-over-month changes (Jan vs Dec)"""
     all_prompts = session.exec(select(Prompt)).all()
     unique_queries = set(p.query for p in all_prompts)
     total_queries = len(unique_queries)
     total_sources = session.exec(select(func.count(Source.id))).one()
 
-    # Get primary brand (Wix) metrics
-    wix_mentions = session.exec(
-        select(PromptBrandMention).where(
-            PromptBrandMention.brand_id == "wix",
-            PromptBrandMention.mentioned == True,
-        )
-    ).all()
+    # Separate January and December prompts
+    jan_prompts = [p for p in all_prompts if p.scraped_at and p.scraped_at.strftime("%Y-%m") == "2026-01"]
+    dec_prompts = [p for p in all_prompts if p.scraped_at and p.scraped_at.strftime("%Y-%m") == "2025-12"]
 
-    # Count unique queries where Wix is mentioned
-    wix_queries = set()
-    for m in wix_mentions:
-        prompt = session.get(Prompt, m.prompt_id)
-        if prompt:
-            wix_queries.add(prompt.query)
+    jan_queries = set(p.query for p in jan_prompts)
+    dec_queries = set(p.query for p in dec_prompts)
 
-    visibility = (len(wix_queries) / total_queries * 100) if total_queries > 0 else 0
-    avg_position = (
-        sum(m.position for m in wix_mentions if m.position) / len(wix_mentions)
-        if wix_mentions
-        else 0
-    )
+    # Calculate Wix visibility for January
+    jan_wix_queries = set()
+    jan_wix_positions = []
+    for prompt in jan_prompts:
+        mention = session.exec(
+            select(PromptBrandMention).where(
+                PromptBrandMention.prompt_id == prompt.id,
+                PromptBrandMention.brand_id == "wix",
+                PromptBrandMention.mentioned == True,
+            )
+        ).first()
+        if mention:
+            jan_wix_queries.add(prompt.query)
+            if mention.position:
+                jan_wix_positions.append(mention.position)
+
+    jan_visibility = (len(jan_wix_queries) / len(jan_queries) * 100) if jan_queries else 0
+    jan_avg_position = sum(jan_wix_positions) / len(jan_wix_positions) if jan_wix_positions else 0
+
+    # Calculate Wix visibility for December
+    dec_wix_queries = set()
+    dec_wix_positions = []
+    for prompt in dec_prompts:
+        mention = session.exec(
+            select(PromptBrandMention).where(
+                PromptBrandMention.prompt_id == prompt.id,
+                PromptBrandMention.brand_id == "wix",
+                PromptBrandMention.mentioned == True,
+            )
+        ).first()
+        if mention:
+            dec_wix_queries.add(prompt.query)
+            if mention.position:
+                dec_wix_positions.append(mention.position)
+
+    dec_visibility = (len(dec_wix_queries) / len(dec_queries) * 100) if dec_queries else 0
+    dec_avg_position = sum(dec_wix_positions) / len(dec_wix_positions) if dec_wix_positions else 0
+
+    # Calculate changes (Jan vs Dec)
+    visibility_change = jan_visibility - dec_visibility
+    # Position: lower is better, so flip sign (Dec - Jan = positive when improved)
+    position_change = dec_avg_position - jan_avg_position  # Positive means improvement
 
     return DashboardMetricsResponse(
-        visibility=MetricResponse(value=round(visibility, 1), change=0),
+        visibility=MetricResponse(value=round(jan_visibility, 1), change=round(visibility_change, 1)),
         totalPrompts=MetricResponse(value=total_queries, change=0),
         totalSources=MetricResponse(value=total_sources, change=0),
-        avgPosition=MetricResponse(value=round(avg_position, 1), change=0),
+        avgPosition=MetricResponse(value=round(jan_avg_position, 1), change=round(position_change, 1)),
     )
 
 
 @app.get("/api/visibility", response_model=list[DailyVisibilityResponse])
 def get_visibility_data(session: Session = Depends(get_session)):
-    """Get time series visibility data for charts"""
-    # For now, generate synthetic data based on actual brand visibility
+    """Get monthly visibility data for charts (Nov 2025, Dec 2025, Jan 2026)"""
     brands = session.exec(select(Brand)).all()
     all_prompts = session.exec(select(Prompt)).all()
-    unique_queries = set(p.query for p in all_prompts)
-    total_queries = len(unique_queries)
 
-    brand_visibility = {}
-    for brand in brands:
-        mentions = session.exec(
-            select(PromptBrandMention).where(
-                PromptBrandMention.brand_id == brand.id,
-                PromptBrandMention.mentioned == True,
-            )
-        ).all()
+    # Group prompts by month
+    months = {
+        "Nov 2025": [],
+        "Dec 2025": [],
+        "Jan 2026": [],
+    }
 
-        # Count unique queries
-        mentioned_queries = set()
-        for m in mentions:
-            prompt = session.get(Prompt, m.prompt_id)
-            if prompt:
-                mentioned_queries.add(prompt.query)
-
-        brand_visibility[brand.id] = (
-            (len(mentioned_queries) / total_queries * 100) if total_queries > 0 else 0
-        )
-
-    # Generate 90 days of data with slight variations
-    import random
-    random.seed(42)  # Consistent data
+    for prompt in all_prompts:
+        if prompt.scraped_at:
+            month_str = prompt.scraped_at.strftime("%Y-%m")
+            if month_str == "2025-11":
+                months["Nov 2025"].append(prompt)
+            elif month_str == "2025-12":
+                months["Dec 2025"].append(prompt)
+            elif month_str == "2026-01":
+                months["Jan 2026"].append(prompt)
 
     result = []
-    today = datetime.now()
-    for i in range(89, -1, -1):
-        date = today - timedelta(days=i)
-        date_str = date.strftime("%Y-%m-%d")
+    for month_name in ["Nov 2025", "Dec 2025", "Jan 2026"]:
+        month_prompts = months[month_name]
+        unique_queries = set(p.query for p in month_prompts)
+        total_queries = len(unique_queries)
 
-        day_data = DailyVisibilityResponse(
-            date=date_str,
-            shopify=round(brand_visibility.get("shopify", 0) + random.uniform(-5, 5), 1),
-            woocommerce=round(brand_visibility.get("woocommerce", 0) + random.uniform(-5, 5), 1),
-            bigcommerce=round(brand_visibility.get("bigcommerce", 0) + random.uniform(-5, 5), 1),
-            wix=round(brand_visibility.get("wix", 0) + random.uniform(-5, 5), 1),
-            squarespace=round(brand_visibility.get("squarespace", 0) + random.uniform(-5, 5), 1),
-        )
-        result.append(day_data)
+        brand_visibility = {}
+        for brand in brands:
+            # Get mentions for prompts in this month
+            mentioned_queries = set()
+            for prompt in month_prompts:
+                mention = session.exec(
+                    select(PromptBrandMention).where(
+                        PromptBrandMention.prompt_id == prompt.id,
+                        PromptBrandMention.brand_id == brand.id,
+                        PromptBrandMention.mentioned == True,
+                    )
+                ).first()
+                if mention:
+                    mentioned_queries.add(prompt.query)
+
+            brand_visibility[brand.id] = (
+                (len(mentioned_queries) / total_queries * 100) if total_queries > 0 else 0
+            )
+
+        result.append(DailyVisibilityResponse(
+            date=month_name,
+            shopify=round(brand_visibility.get("shopify", 0), 1),
+            woocommerce=round(brand_visibility.get("woocommerce", 0), 1),
+            bigcommerce=round(brand_visibility.get("bigcommerce", 0), 1),
+            wix=round(brand_visibility.get("wix", 0), 1),
+            squarespace=round(brand_visibility.get("squarespace", 0), 1),
+        ))
 
     return result
 

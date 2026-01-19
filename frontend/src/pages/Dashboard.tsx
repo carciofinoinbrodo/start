@@ -1,11 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Eye, FileText, Globe, Hash, Loader2 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
 import { DataTable } from '../components/ui/DataTable';
 import { TrendBadge, SentimentBadge } from '../components/ui/Badge';
 import { VisibilityChart } from '../components/charts/VisibilityChart';
-import { ChartDrilldownModal } from '../components/charts/ChartDrilldownModal';
 import { useBrands, useSources, useMetrics, useVisibilityData } from '../hooks/useApi';
 import type { DailyVisibility } from '../types';
 
@@ -152,38 +151,6 @@ export function Dashboard() {
     }));
   }, [visibilityData]);
 
-  // State for chart interactions
-  const [comparisonMode, setComparisonMode] = useState(false);
-  const [comparisonBrands, setComparisonBrands] = useState<string[]>([]);
-  const [drilldownData, setDrilldownData] = useState<{
-    date: string;
-    data: DailyVisibility;
-  } | null>(null);
-
-  const handleComparisonToggle = () => {
-    setComparisonMode((prev) => !prev);
-    if (comparisonMode) {
-      setComparisonBrands([]); // Reset selections when exiting comparison mode
-    }
-  };
-
-  const handleBrandSelect = (brandId: string) => {
-    setComparisonBrands((prev) => {
-      if (prev.includes(brandId)) {
-        return prev.filter((id) => id !== brandId);
-      }
-      if (prev.length >= 2) {
-        // Replace the oldest selection
-        return [prev[1], brandId];
-      }
-      return [...prev, brandId];
-    });
-  };
-
-  const handleDataPointClick = (date: string, data: DailyVisibility) => {
-    setDrilldownData({ date, data });
-  };
-
   const isLoading = brandsLoading || sourcesLoading || metricsLoading || visibilityLoading;
 
   if (isLoading) {
@@ -260,18 +227,12 @@ export function Dashboard() {
           />
         </div>
 
-        {/* Visibility Chart - now interactive */}
+        {/* Visibility Chart */}
         <div className="mb-8">
           <VisibilityChart
             data={chartData}
             brands={brands}
-            timeRange="30d"
             animationDelay={500}
-            comparisonMode={comparisonMode}
-            comparisonBrands={comparisonBrands}
-            onComparisonToggle={handleComparisonToggle}
-            onBrandSelect={handleBrandSelect}
-            onDataPointClick={handleDataPointClick}
           />
         </div>
 
@@ -302,15 +263,6 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* Drilldown Modal */}
-      <ChartDrilldownModal
-        isOpen={drilldownData !== null}
-        onClose={() => setDrilldownData(null)}
-        date={drilldownData?.date || ''}
-        data={drilldownData?.data || null}
-        brands={brands}
-      />
     </div>
   );
 }
