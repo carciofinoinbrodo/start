@@ -63,6 +63,7 @@ export interface SourceResponse {
 export interface MetricResponse {
   value: number;
   change: number;
+  total?: number;
 }
 
 export interface DashboardMetricsResponse {

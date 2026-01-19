@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
-import { Search, ChevronDown, ChevronRight, ExternalLink, Loader2, Calendar } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, ChevronUp, ExternalLink, Loader2, Calendar } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { SentimentBadge } from '../components/ui/Badge';
 import { usePrompts, useBrands, usePromptDetail } from '../hooks/useApi';
@@ -67,19 +67,19 @@ function PromptRow({
             </span>
           </div>
         </td>
-        <td className="px-5 py-4 whitespace-nowrap">
+        <td className="px-5 py-4 whitespace-nowrap text-center">
           <span className="text-sm font-mono text-[var(--text-secondary)]">
             {prompt.avgPosition > 0 ? `#${prompt.avgPosition}` : '-'}
           </span>
         </td>
-        <td className="px-5 py-4 whitespace-nowrap">
+        <td className="px-5 py-4 whitespace-nowrap text-center">
           <span className="text-sm font-mono text-[var(--text-secondary)]">{prompt.totalMentions}</span>
         </td>
-        <td className="px-5 py-4 whitespace-nowrap">
+        <td className="px-5 py-4 whitespace-nowrap text-center">
           <span className="text-sm font-mono text-[var(--accent-primary)]">{prompt.totalRuns}</span>
         </td>
-        <td className="px-5 py-4 whitespace-nowrap">
-          <div className="flex items-center -space-x-2">
+        <td className="px-5 py-4 whitespace-nowrap text-center">
+          <div className="flex items-center -space-x-2 justify-center">
             {mentionedBrands.slice(0, 4).map((mention) => {
               const brand = brands.find((b) => b.id === mention.brandId);
               return (
@@ -347,10 +347,15 @@ function BrandMentionCard({ mention, brands }: { mention: PromptBrandMention; br
   );
 }
 
+type SortKey = 'query' | 'visibility' | 'avgPosition' | 'totalMentions' | 'totalRuns';
+type SortDirection = 'asc' | 'desc' | null;
+
 export function Prompts() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const { data: prompts, loading: promptsLoading, error: promptsError } = usePrompts();
   const { data: brandsData, loading: brandsLoading } = useBrands();
@@ -365,6 +370,16 @@ export function Prompts() {
     }
   }, [searchParams, prompts, setSearchParams]);
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      // Toggle between asc and desc
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
   const brands: Brand[] = useMemo(() => {
     if (!brandsData) return [];
     return brandsData.map(b => ({ id: b.id, name: b.name, color: b.color }));
@@ -372,13 +387,31 @@ export function Prompts() {
 
   const filteredPrompts = useMemo(() => {
     if (!prompts) return [];
-    let filtered = prompts;
+    let filtered = [...prompts];
+
+    // Apply search filter
     if (searchQuery) {
-      filtered = prompts.filter((p) =>
+      filtered = filtered.filter((p) =>
         p.query.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    // Move expanded prompt to top of list
+
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      filtered.sort((a, b) => {
+        const aVal = a[sortKey];
+        const bVal = b[sortKey];
+
+        if (aVal === bVal) return 0;
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
+
+        const comparison = aVal < bVal ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    // Move expanded prompt to top of list (after sorting)
     if (expandedId) {
       const expandedIndex = filtered.findIndex(p => p.id === expandedId);
       if (expandedIndex > 0) {
@@ -387,7 +420,7 @@ export function Prompts() {
       }
     }
     return filtered;
-  }, [prompts, searchQuery, expandedId]);
+  }, [prompts, searchQuery, expandedId, sortKey, sortDirection]);
 
   const toggleExpanded = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -441,12 +474,62 @@ export function Prompts() {
               <table className="table-dark">
                 <thead>
                   <tr>
-                    <th>Query</th>
-                    <th>Visibility</th>
-                    <th>Avg Position</th>
-                    <th>Mentions</th>
-                    <th>Runs</th>
-                    <th>Brands</th>
+                    <th
+                      onClick={() => handleSort('query')}
+                      className="cursor-pointer select-none hover:text-[var(--text-primary)] transition-colors"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Query</span>
+                        {sortKey === 'query' && sortDirection === 'asc' && <ChevronUp className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey === 'query' && sortDirection === 'desc' && <ChevronDown className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey !== 'query' && <ChevronUp className="w-3 h-3 opacity-30" />}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('visibility')}
+                      className="cursor-pointer select-none hover:text-[var(--text-primary)] transition-colors text-center"
+                    >
+                      <div className="flex items-center gap-1 justify-center">
+                        <span>Visibility</span>
+                        {sortKey === 'visibility' && sortDirection === 'asc' && <ChevronUp className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey === 'visibility' && sortDirection === 'desc' && <ChevronDown className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey !== 'visibility' && <ChevronUp className="w-3 h-3 opacity-30" />}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('avgPosition')}
+                      className="cursor-pointer select-none hover:text-[var(--text-primary)] transition-colors text-center"
+                    >
+                      <div className="flex items-center gap-1 justify-center">
+                        <span>Avg Position</span>
+                        {sortKey === 'avgPosition' && sortDirection === 'asc' && <ChevronUp className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey === 'avgPosition' && sortDirection === 'desc' && <ChevronDown className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey !== 'avgPosition' && <ChevronUp className="w-3 h-3 opacity-30" />}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('totalMentions')}
+                      className="cursor-pointer select-none hover:text-[var(--text-primary)] transition-colors text-center"
+                    >
+                      <div className="flex items-center gap-1 justify-center">
+                        <span>Mentions</span>
+                        {sortKey === 'totalMentions' && sortDirection === 'asc' && <ChevronUp className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey === 'totalMentions' && sortDirection === 'desc' && <ChevronDown className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey !== 'totalMentions' && <ChevronUp className="w-3 h-3 opacity-30" />}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('totalRuns')}
+                      className="cursor-pointer select-none hover:text-[var(--text-primary)] transition-colors text-center"
+                    >
+                      <div className="flex items-center gap-1 justify-center">
+                        <span>Runs</span>
+                        {sortKey === 'totalRuns' && sortDirection === 'asc' && <ChevronUp className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey === 'totalRuns' && sortDirection === 'desc' && <ChevronDown className="w-3 h-3 text-[var(--accent-primary)]" />}
+                        {sortKey !== 'totalRuns' && <ChevronUp className="w-3 h-3 opacity-30" />}
+                      </div>
+                    </th>
+                    <th className="text-center">Brands</th>
                   </tr>
                 </thead>
                 <tbody>

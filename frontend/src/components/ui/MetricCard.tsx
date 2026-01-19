@@ -12,6 +12,8 @@ interface MetricCardProps {
   delay?: number;
   linkTo?: string;
   linkLabel?: string;
+  secondaryValue?: string | number;
+  secondaryLabel?: string;
 }
 
 function easeOutCubic(t: number): number {
@@ -58,7 +60,7 @@ function useCountUp(end: number, duration: number = 600, delay: number = 0) {
   return count;
 }
 
-export function MetricCard({ label, value, change, changeLabel, icon: Icon, delay = 0, linkTo, linkLabel }: MetricCardProps) {
+export function MetricCard({ label, value, change, changeLabel, icon: Icon, delay = 0, linkTo, linkLabel, secondaryValue, secondaryLabel }: MetricCardProps) {
   const isPositive = change && change > 0;
   const isNegative = change && change < 0;
 
@@ -93,6 +95,17 @@ export function MetricCard({ label, value, change, changeLabel, icon: Icon, dela
           <Icon className="w-5 h-5 text-[var(--accent-primary)]" />
         </div>
       </div>
+
+      {secondaryValue !== undefined && (
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--border-subtle)]">
+          <span className="text-lg font-semibold font-mono text-[var(--text-secondary)]">
+            {secondaryValue}
+          </span>
+          {secondaryLabel && (
+            <span className="text-sm text-[var(--text-muted)]">{secondaryLabel}</span>
+          )}
+        </div>
+      )}
 
       {change !== undefined && (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--border-subtle)]">

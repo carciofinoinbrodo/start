@@ -404,7 +404,6 @@ def get_metrics(session: Session = Depends(get_session)):
     all_prompts = session.exec(select(Prompt)).all()
     unique_queries = set(p.query for p in all_prompts)
     total_queries = len(unique_queries)
-    total_sources = session.exec(select(func.count(Source.id))).one()
 
     # Separate January and December prompts
     jan_prompts = [p for p in all_prompts if p.scraped_at and p.scraped_at.strftime("%Y-%m") == "2026-01"]
@@ -412,6 +411,33 @@ def get_metrics(session: Session = Depends(get_session)):
 
     jan_queries = set(p.query for p in jan_prompts)
     dec_queries = set(p.query for p in dec_prompts)
+
+    # Calculate sources: count total source citations across all runs
+    # Sources this month (January 2026)
+    jan_source_count = 0
+    for prompt in jan_prompts:
+        prompt_sources = session.exec(
+            select(PromptSource).where(PromptSource.prompt_id == prompt.id)
+        ).all()
+        jan_source_count += len(prompt_sources)
+
+    # Sources last month (December 2025) for change calculation
+    dec_source_count = 0
+    for prompt in dec_prompts:
+        prompt_sources = session.exec(
+            select(PromptSource).where(PromptSource.prompt_id == prompt.id)
+        ).all()
+        dec_source_count += len(prompt_sources)
+
+    # Total sources across all months
+    total_source_count = 0
+    for prompt in all_prompts:
+        prompt_sources = session.exec(
+            select(PromptSource).where(PromptSource.prompt_id == prompt.id)
+        ).all()
+        total_source_count += len(prompt_sources)
+
+    sources_change = jan_source_count - dec_source_count
 
     # Calculate Wix visibility for January
     jan_wix_queries = set()
@@ -459,7 +485,7 @@ def get_metrics(session: Session = Depends(get_session)):
     return DashboardMetricsResponse(
         visibility=MetricResponse(value=round(jan_visibility, 1), change=round(visibility_change, 1)),
         totalPrompts=MetricResponse(value=total_queries, change=0),
-        totalSources=MetricResponse(value=total_sources, change=0),
+        totalSources=MetricResponse(value=jan_source_count, change=sources_change, total=total_source_count),
         avgPosition=MetricResponse(value=round(jan_avg_position, 1), change=round(position_change, 1)),
     )
 

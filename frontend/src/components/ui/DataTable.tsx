@@ -1,9 +1,16 @@
+import { useState, useMemo } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
+
+type SortDirection = 'asc' | 'desc' | null;
+
 interface Column<T> {
   key: string;
   header: string;
   render?: (item: T) => React.ReactNode;
   className?: string;
   align?: 'left' | 'center' | 'right';
+  sortable?: boolean;
+  sortKey?: keyof T;
 }
 
 interface DataTableProps<T> {
@@ -13,6 +20,7 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
   animationDelay?: number;
+  isPinned?: (item: T) => boolean;
 }
 
 export function DataTable<T>({
@@ -22,7 +30,57 @@ export function DataTable<T>({
   onRowClick,
   emptyMessage = 'No data available',
   animationDelay = 0,
+  isPinned,
 }: DataTableProps<T>) {
+  const [sortKey, setSortKey] = useState<keyof T | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (column: Column<T>) => {
+    if (!column.sortable) return;
+    const key = column.sortKey || (column.key as keyof T);
+
+    if (sortKey === key) {
+      // Toggle between asc and desc
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedData = useMemo(() => {
+    // No sorting active - return original order
+    if (!sortKey || !sortDirection) {
+      return [...data];
+    }
+
+    // Create a copy and sort
+    const result = [...data].sort((a, b) => {
+      // If isPinned is provided, pinned items always come first
+      if (isPinned) {
+        const aPinned = isPinned(a);
+        const bPinned = isPinned(b);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        // If both pinned or both not pinned, continue to regular sort
+        // But if both are pinned, keep original order (don't sort between them)
+        if (aPinned && bPinned) return 0;
+      }
+
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      const comparison = aVal < bVal ? -1 : 1;
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [data, sortKey, sortDirection, isPinned]);
+
   if (data.length === 0) {
     return (
       <div className="glass-card p-8 text-center">
@@ -40,21 +98,43 @@ export function DataTable<T>({
         <table className="table-dark w-full">
           <thead>
             <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className={`${column.className || ''} ${
-                    column.align === 'right' ? 'text-right' :
-                    column.align === 'center' ? 'text-center' : 'text-left'
-                  }`}
-                >
-                  {column.header}
-                </th>
-              ))}
+              {columns.map((column) => {
+                const isActive = sortKey === (column.sortKey || column.key);
+                return (
+                  <th
+                    key={column.key}
+                    onClick={() => handleSort(column)}
+                    className={`${column.className || ''} ${
+                      column.align === 'right' ? 'text-right' :
+                      column.align === 'center' ? 'text-center' : 'text-left'
+                    } ${column.sortable ? 'cursor-pointer select-none hover:text-[var(--text-primary)] transition-colors' : ''}`}
+                  >
+                    <div className={`flex items-center gap-1 ${
+                      column.align === 'right' ? 'justify-end' :
+                      column.align === 'center' ? 'justify-center' : 'justify-start'
+                    }`}>
+                      <span>{column.header}</span>
+                      {column.sortable && (
+                        <span className="flex flex-col">
+                          {isActive && sortDirection === 'asc' && (
+                            <ChevronUp className="w-3 h-3 text-[var(--accent-primary)]" />
+                          )}
+                          {isActive && sortDirection === 'desc' && (
+                            <ChevronDown className="w-3 h-3 text-[var(--accent-primary)]" />
+                          )}
+                          {!isActive && (
+                            <ChevronUp className="w-3 h-3 opacity-30" />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {data.map((item, index) => (
+            {sortedData.map((item, index) => (
               <tr
                 key={keyExtractor(item)}
                 onClick={() => onRowClick?.(item)}

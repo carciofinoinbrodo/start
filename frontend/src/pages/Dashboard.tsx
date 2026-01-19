@@ -30,6 +30,7 @@ const brandColumns = [
   {
     key: 'name',
     header: 'Brand',
+    sortable: true,
     render: (brand: Brand) => (
       <div className="flex items-center gap-3">
         <div
@@ -49,6 +50,7 @@ const brandColumns = [
     key: 'visibility',
     header: 'Visibility',
     align: 'center' as const,
+    sortable: true,
     render: (brand: Brand) => (
       <span className="text-data">{brand.visibility}%</span>
     ),
@@ -67,6 +69,7 @@ const brandColumns = [
     key: 'avgPosition',
     header: 'Avg Position',
     align: 'center' as const,
+    sortable: true,
     render: (brand: Brand) => (
       <span className="text-[var(--text-secondary)] font-mono">#{brand.avgPosition.toFixed(1)}</span>
     ),
@@ -77,6 +80,7 @@ const sourceColumns = [
   {
     key: 'domain',
     header: 'Source',
+    sortable: true,
     render: (source: Source) => (
       <div className="flex items-center gap-2">
         <Globe className="w-4 h-4 text-[var(--accent-primary)]" />
@@ -87,6 +91,7 @@ const sourceColumns = [
   {
     key: 'usage',
     header: 'Usage',
+    sortable: true,
     render: (source: Source) => (
       <div className="flex items-center gap-3">
         <div className="progress-bar w-24">
@@ -103,6 +108,7 @@ const sourceColumns = [
     key: 'avgCitations',
     header: 'Avg Citations',
     align: 'center' as const,
+    sortable: true,
     render: (source: Source) => (
       <span className="text-[var(--text-secondary)] font-mono">{source.avgCitations.toFixed(1)}</span>
     ),
@@ -217,9 +223,10 @@ export function Dashboard() {
           <MetricCard
             label="Sources Cited"
             value={metricsData?.totalSources.value ?? 0}
-            change={metricsData?.totalSources.change ?? 0}
             icon={Globe}
             delay={350}
+            secondaryValue={metricsData?.totalSources.total ?? 0}
+            secondaryLabel="total"
           />
           <MetricCard
             label="Avg Position"
@@ -250,6 +257,7 @@ export function Dashboard() {
               data={brands}
               keyExtractor={(brand) => brand.id}
               animationDelay={750}
+              isPinned={(brand) => brand.type === 'primary'}
             />
           </div>
 

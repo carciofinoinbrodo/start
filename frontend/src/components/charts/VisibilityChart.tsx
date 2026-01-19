@@ -98,7 +98,7 @@ export function VisibilityChart({
       <ResponsiveContainer width="100%" height={350}>
         <AreaChart
           data={data}
-          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+          margin={{ top: 10, right: 30, left: -10, bottom: 0 }}
         >
           <defs>
             {brands.map((brand) => (

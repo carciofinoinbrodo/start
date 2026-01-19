@@ -74,6 +74,7 @@ class MetricResponse(BaseModel):
     """Dashboard metric"""
     value: float | int
     change: float
+    total: int | None = None
 
 
 class DashboardMetricsResponse(BaseModel):
