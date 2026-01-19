@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Eye, FileText, Globe, Hash } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
 import { DataTable } from '../components/ui/DataTable';
 import { TrendBadge, SentimentBadge } from '../components/ui/Badge';
 import { VisibilityChart } from '../components/charts/VisibilityChart';
+import { ChartDrilldownModal } from '../components/charts/ChartDrilldownModal';
 import { brands, visibilityData, sources, metrics } from '../data/mockData';
-import type { Brand, Source } from '../types';
+import type { Brand, Source, DailyVisibility } from '../types';
 
 const brandColumns = [
   {
@@ -29,7 +31,7 @@ const brandColumns = [
   {
     key: 'visibility',
     header: 'Visibility',
-    align: 'right' as const,
+    align: 'center' as const,
     render: (brand: Brand) => (
       <span className="text-data">{brand.visibility}%</span>
     ),
@@ -47,7 +49,7 @@ const brandColumns = [
   {
     key: 'avgPosition',
     header: 'Avg Position',
-    align: 'right' as const,
+    align: 'center' as const,
     render: (brand: Brand) => (
       <span className="text-[var(--text-secondary)] font-mono">#{brand.avgPosition.toFixed(1)}</span>
     ),
@@ -83,7 +85,7 @@ const sourceColumns = [
   {
     key: 'avgCitations',
     header: 'Avg Citations',
-    align: 'right' as const,
+    align: 'center' as const,
     render: (source: Source) => (
       <span className="text-[var(--text-secondary)] font-mono">{source.avgCitations.toFixed(1)}</span>
     ),
@@ -91,6 +93,38 @@ const sourceColumns = [
 ];
 
 export function Dashboard() {
+  // State for chart interactions
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [comparisonBrands, setComparisonBrands] = useState<string[]>([]);
+  const [drilldownData, setDrilldownData] = useState<{
+    date: string;
+    data: DailyVisibility;
+  } | null>(null);
+
+  const handleComparisonToggle = () => {
+    setComparisonMode((prev) => !prev);
+    if (comparisonMode) {
+      setComparisonBrands([]); // Reset selections when exiting comparison mode
+    }
+  };
+
+  const handleBrandSelect = (brandId: string) => {
+    setComparisonBrands((prev) => {
+      if (prev.includes(brandId)) {
+        return prev.filter((id) => id !== brandId);
+      }
+      if (prev.length >= 2) {
+        // Replace the oldest selection
+        return [prev[1], brandId];
+      }
+      return [...prev, brandId];
+    });
+  };
+
+  const handleDataPointClick = (date: string, data: DailyVisibility) => {
+    setDrilldownData({ date, data });
+  };
+
   return (
     <div className="min-h-screen">
       <Header
@@ -98,9 +132,9 @@ export function Dashboard() {
         subtitle="Track how AI search engines cite your brand vs competitors"
       />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           <MetricCard
             label="Brand Visibility"
             value={`${metrics.visibility.value}%`}
@@ -131,20 +165,25 @@ export function Dashboard() {
           />
         </div>
 
-        {/* Visibility Chart */}
+        {/* Visibility Chart - now interactive */}
         <div className="mb-8">
           <VisibilityChart
             data={visibilityData}
             brands={brands}
             timeRange="30d"
             animationDelay={500}
+            comparisonMode={comparisonMode}
+            comparisonBrands={comparisonBrands}
+            onComparisonToggle={handleComparisonToggle}
+            onBrandSelect={handleBrandSelect}
+            onDataPointClick={handleDataPointClick}
           />
         </div>
 
         {/* Data Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6 md:gap-8">
           <div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 animate-fade-in-up delay-700">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 animate-fade-in-up" style={{ animationDelay: '700ms' }}>
               Top Brands
             </h3>
             <DataTable
@@ -156,7 +195,7 @@ export function Dashboard() {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 animate-fade-in-up delay-800">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 animate-fade-in-up" style={{ animationDelay: '800ms' }}>
               Top Sources
             </h3>
             <DataTable
@@ -168,6 +207,15 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Drilldown Modal */}
+      <ChartDrilldownModal
+        isOpen={drilldownData !== null}
+        onClose={() => setDrilldownData(null)}
+        date={drilldownData?.date || ''}
+        data={drilldownData?.data || null}
+        brands={brands}
+      />
     </div>
   );
 }

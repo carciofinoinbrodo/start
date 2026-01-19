@@ -171,7 +171,8 @@ export function Prompts() {
               placeholder="Search prompts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-dark w-full pl-9 pr-4 py-2.5 text-sm"
+              className="input-dark w-full pr-4 py-2.5 text-sm"
+              style={{ paddingLeft: '2.5rem' }}
             />
           </div>
         </div>

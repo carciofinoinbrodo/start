@@ -33,11 +33,11 @@ export function DataTable<T>({
 
   return (
     <div
-      className="glass-card overflow-hidden animate-fade-in-up"
+      className="glass-card overflow-hidden animate-fade-in-up min-w-0"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       <div className="overflow-x-auto">
-        <table className="table-dark">
+        <table className="table-dark w-full">
           <thead>
             <tr>
               {columns.map((column) => (

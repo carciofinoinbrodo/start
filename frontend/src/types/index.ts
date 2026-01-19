@@ -43,3 +43,21 @@ export interface MetricData {
   change?: number;
   changeLabel?: string;
 }
+
+// Search types
+export type SearchCategory = 'prompts' | 'brands' | 'sources';
+
+export interface SearchResult {
+  id: string;
+  category: SearchCategory;
+  title: string;
+  subtitle?: string;
+  href: string;
+  color?: string;
+}
+
+export interface SearchResultGroup {
+  category: SearchCategory;
+  label: string;
+  results: SearchResult[];
+}

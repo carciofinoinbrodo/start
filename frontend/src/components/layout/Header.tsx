@@ -1,4 +1,7 @@
-import { Bell, Search } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import { GlobalSearch } from '../search/GlobalSearch';
+import { MobileNav } from './MobileNav';
+import { useBreakpoint } from '../../hooks/useMediaQuery';
 
 interface HeaderProps {
   title: string;
@@ -6,25 +9,26 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const breakpoint = useBreakpoint();
+  const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
+
   return (
-    <header className="sticky top-0 z-20 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/80 backdrop-blur-xl px-8 py-4 animate-fade-in-down">
+    <header className="sticky top-0 z-20 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/80 backdrop-blur-xl px-4 md:px-8 py-4 animate-fade-in-down">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)] tracking-tight">{title}</h1>
-          {subtitle && (
-            <p className="text-sm text-[var(--text-muted)] mt-0.5">{subtitle}</p>
-          )}
+        <div className="flex items-center gap-4">
+          {isMobile && <MobileNav />}
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">{title}</h1>
+            {subtitle && (
+              <p className="text-xs md:text-sm text-[var(--text-muted)] mt-0.5">{subtitle}</p>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="input-dark pl-9 pr-4 py-2 text-sm w-64"
-            />
+          {/* Search - hidden on mobile */}
+          <div className="hidden md:block">
+            <GlobalSearch />
           </div>
 
           {/* Notifications */}

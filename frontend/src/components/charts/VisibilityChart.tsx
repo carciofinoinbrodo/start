@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GitCompareArrows } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -9,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { BrandComparisonToggle } from './BrandComparisonToggle';
 import type { DailyVisibility, Brand } from '../../types';
 
 interface VisibilityChartProps {
@@ -16,6 +18,11 @@ interface VisibilityChartProps {
   brands: Brand[];
   timeRange?: '7d' | '30d' | '90d';
   animationDelay?: number;
+  comparisonMode?: boolean;
+  comparisonBrands?: string[];
+  onComparisonToggle?: () => void;
+  onBrandSelect?: (brandId: string) => void;
+  onDataPointClick?: (date: string, data: DailyVisibility) => void;
 }
 
 interface CustomTooltipProps {
@@ -66,7 +73,7 @@ function CustomLegend({ payload }: { payload?: LegendPayloadItem[] }) {
   if (!payload) return null;
 
   return (
-    <div className="flex items-center justify-center gap-6 pt-4">
+    <div className="flex items-center justify-center gap-6 pt-4 flex-wrap">
       {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-2">
           <span
@@ -87,6 +94,11 @@ export function VisibilityChart({
   brands,
   timeRange: initialTimeRange = '30d',
   animationDelay = 0,
+  comparisonMode = false,
+  comparisonBrands = [],
+  onComparisonToggle,
+  onBrandSelect,
+  onDataPointClick,
 }: VisibilityChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>(initialTimeRange);
 
@@ -95,6 +107,11 @@ export function VisibilityChart({
     return data.slice(-days);
   })();
 
+  // Filter brands when in comparison mode
+  const displayedBrands = comparisonMode && comparisonBrands.length > 0
+    ? brands.filter(b => comparisonBrands.includes(b.id))
+    : brands;
+
   const formatXAxis = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -102,37 +119,77 @@ export function VisibilityChart({
 
   const timeRanges: TimeRange[] = ['7d', '30d', '90d'];
 
+  const handleChartClick = (chartData: { activePayload?: Array<{ payload: DailyVisibility }> } | null) => {
+    if (onDataPointClick && chartData?.activePayload?.[0]?.payload) {
+      const payload = chartData.activePayload[0].payload;
+      onDataPointClick(payload.date, payload);
+    }
+  };
+
   return (
     <div
       className="chart-container animate-fade-in-up"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Visibility Trend</h3>
           <p className="text-sm text-[var(--text-muted)] mt-0.5">Brand visibility over time</p>
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-[var(--bg-elevated)]">
-          {timeRanges.map((range) => (
+        <div className="flex items-center gap-3">
+          {/* Comparison Mode Toggle */}
+          {onComparisonToggle && (
             <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                timeRange === range
-                  ? 'bg-[var(--accent-glow)] text-[var(--accent-secondary)] shadow-sm'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+              onClick={onComparisonToggle}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                comparisonMode
+                  ? 'bg-[var(--accent-glow)] text-[var(--accent-secondary)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-bg)]'
               }`}
             >
-              {range}
+              <GitCompareArrows className="w-4 h-4" />
+              <span className="hidden sm:inline">Compare</span>
             </button>
-          ))}
+          )}
+
+          {/* Time Range Selector */}
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-[var(--bg-elevated)]">
+            {timeRanges.map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                  timeRange === range
+                    ? 'bg-[var(--accent-glow)] text-[var(--accent-secondary)] shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* Brand Selection in Comparison Mode */}
+      {comparisonMode && onBrandSelect && (
+        <BrandComparisonToggle
+          brands={brands}
+          selectedBrands={comparisonBrands}
+          onToggle={onBrandSelect}
+          maxSelection={2}
+        />
+      )}
+
       <ResponsiveContainer width="100%" height={350}>
-        <AreaChart data={filteredData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <AreaChart
+          data={filteredData}
+          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+          onClick={handleChartClick}
+          style={{ cursor: onDataPointClick ? 'pointer' : 'default' }}
+        >
           <defs>
-            {brands.map((brand) => (
+            {displayedBrands.map((brand) => (
               <linearGradient key={brand.id} id={`color-${brand.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={brand.color} stopOpacity={0.3} />
                 <stop offset="100%" stopColor={brand.color} stopOpacity={0} />
@@ -165,7 +222,7 @@ export function VisibilityChart({
             cursor={{ stroke: 'var(--accent-primary)', strokeOpacity: 0.3, strokeWidth: 1 }}
           />
           <Legend content={<CustomLegend />} />
-          {brands.map((brand) => (
+          {displayedBrands.map((brand) => (
             <Area
               key={brand.id}
               type="monotone"
@@ -181,7 +238,10 @@ export function VisibilityChart({
                 strokeWidth: 2,
                 stroke: 'var(--bg-primary)',
                 fill: brand.color,
-                style: { filter: `drop-shadow(0 0 6px ${brand.color})` },
+                style: {
+                  filter: `drop-shadow(0 0 6px ${brand.color})`,
+                  cursor: 'pointer',
+                },
               }}
               animationDuration={800}
               animationEasing="ease-out"
@@ -189,6 +249,13 @@ export function VisibilityChart({
           ))}
         </AreaChart>
       </ResponsiveContainer>
+
+      {/* Click hint */}
+      {onDataPointClick && (
+        <p className="text-xs text-[var(--text-muted)] text-center mt-4">
+          Click on the chart to see daily breakdown
+        </p>
+      )}
     </div>
   );
 }
