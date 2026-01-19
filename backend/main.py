@@ -18,6 +18,14 @@ from .schemas import (
     DashboardMetricsResponse,
     MetricResponse,
     DailyVisibilityResponse,
+    SourcesAnalyticsResponse,
+    SourcesSummary,
+    DomainBreakdown,
+    SourceType,
+    TopSource,
+    SuggestionsResponse,
+    Suggestion,
+    SuggestionExample,
 )
 
 app = FastAPI(title="AiSEO API", version="1.0.0")
@@ -561,6 +569,260 @@ def get_visibility_data(session: Session = Depends(get_session)):
         ))
 
     return result
+
+
+@app.get("/api/sources/analytics", response_model=SourcesAnalyticsResponse)
+def get_sources_analytics(session: Session = Depends(get_session)):
+    """Get detailed analytics for citation sources"""
+    sources = session.exec(select(Source)).all()
+    all_prompts = session.exec(select(Prompt)).all()
+
+    # Classify domains by type
+    def classify_domain(domain: str) -> str:
+        domain_lower = domain.lower()
+        # Brand/official sites
+        if any(brand in domain_lower for brand in ['shopify', 'wix', 'woocommerce', 'bigcommerce', 'squarespace', 'wordpress']):
+            return 'brand'
+        # Community/forums
+        if any(community in domain_lower for community in ['reddit', 'quora', 'stackexchange', 'stackoverflow', 'discourse']):
+            return 'community'
+        # News/media
+        if any(news in domain_lower for news in ['forbes', 'techcrunch', 'entrepreneur', 'inc.com', 'businessinsider', 'cnet', 'zdnet', 'pcmag', 'theverge']):
+            return 'news'
+        # Blogs (common blog patterns)
+        if any(blog in domain_lower for blog in ['blog', 'medium.com', 'dev.to', 'hashnode', 'substack']):
+            return 'blog'
+        # Review sites
+        if any(review in domain_lower for review in ['g2.com', 'capterra', 'trustpilot', 'trustradius', 'getapp']):
+            return 'review'
+        # Default: check for common blog patterns in URL structure
+        return 'other'
+
+    # Build domain citation counts
+    domain_citations = Counter()
+    source_citations = {}  # source_id -> list of prompt queries
+
+    for source in sources:
+        prompt_links = session.exec(
+            select(PromptSource).where(PromptSource.source_id == source.id)
+        ).all()
+
+        # Count total citations (across all runs)
+        domain_citations[source.domain] += len(prompt_links)
+
+        # Get unique prompts citing this source
+        prompt_queries = []
+        for pl in prompt_links:
+            prompt = session.get(Prompt, pl.prompt_id)
+            if prompt and prompt.query not in prompt_queries:
+                prompt_queries.append(prompt.query)
+        source_citations[source.id] = prompt_queries
+
+    total_citations = sum(domain_citations.values())
+    total_sources = len(sources)
+    total_domains = len(set(s.domain for s in sources))
+
+    # Build domain breakdown (top 20)
+    domain_breakdown = []
+    for domain, citations in domain_citations.most_common(20):
+        domain_breakdown.append(DomainBreakdown(
+            domain=domain,
+            citations=citations,
+            percentage=round(citations / total_citations * 100, 1) if total_citations > 0 else 0,
+            type=classify_domain(domain)
+        ))
+
+    # Build source types breakdown
+    type_counts = Counter()
+    for source in sources:
+        source_type = classify_domain(source.domain)
+        # Refine classification: if URL contains /blog/ it's likely a blog post
+        if source.url and '/blog/' in source.url.lower():
+            source_type = 'blog'
+        type_counts[source_type] += 1
+
+    source_types = []
+    for stype, count in type_counts.most_common():
+        source_types.append(SourceType(
+            type=stype,
+            count=count,
+            percentage=round(count / total_sources * 100, 1) if total_sources > 0 else 0
+        ))
+
+    # Build top sources list (top 50 by citation count)
+    sources_with_citations = []
+    for source in sources:
+        prompt_links = session.exec(
+            select(PromptSource).where(PromptSource.source_id == source.id)
+        ).all()
+        sources_with_citations.append((source, len(prompt_links)))
+
+    sources_with_citations.sort(key=lambda x: x[1], reverse=True)
+
+    top_sources = []
+    for source, citation_count in sources_with_citations[:50]:
+        top_sources.append(TopSource(
+            id=source.id,
+            domain=source.domain,
+            url=source.url,
+            title=source.title,
+            citations=citation_count,
+            prompts=source_citations.get(source.id, [])[:5]  # Limit to 5 prompts
+        ))
+
+    return SourcesAnalyticsResponse(
+        summary=SourcesSummary(
+            totalSources=total_sources,
+            totalDomains=total_domains,
+            totalCitations=total_citations,
+            avgCitationsPerSource=round(total_citations / total_sources, 1) if total_sources > 0 else 0
+        ),
+        domainBreakdown=domain_breakdown,
+        sourceTypes=source_types,
+        topSources=top_sources
+    )
+
+
+@app.get("/api/suggestions", response_model=SuggestionsResponse)
+def get_suggestions(session: Session = Depends(get_session)):
+    """Get AI SEO improvement suggestions based on source data analysis"""
+    sources = session.exec(select(Source)).all()
+    all_prompts = session.exec(select(Prompt)).all()
+
+    # Calculate source type percentages
+    total_sources = len(sources)
+
+    def classify_domain(domain: str, url: str = "") -> str:
+        domain_lower = domain.lower()
+        url_lower = url.lower() if url else ""
+
+        if '/blog/' in url_lower:
+            return 'blog'
+        if any(brand in domain_lower for brand in ['shopify', 'wix', 'woocommerce', 'bigcommerce', 'squarespace']):
+            return 'brand'
+        if any(community in domain_lower for community in ['reddit', 'quora']):
+            return 'community'
+        if any(news in domain_lower for news in ['forbes', 'techcrunch', 'entrepreneur', 'inc.com', 'businessinsider']):
+            return 'news'
+        if any(review in domain_lower for review in ['g2.com', 'capterra', 'trustpilot']):
+            return 'review'
+        return 'other'
+
+    type_counts = Counter()
+    for source in sources:
+        type_counts[classify_domain(source.domain, source.url)] += 1
+
+    blog_pct = round(type_counts.get('blog', 0) / total_sources * 100) if total_sources > 0 else 0
+    community_pct = round(type_counts.get('community', 0) / total_sources * 100) if total_sources > 0 else 0
+    news_pct = round(type_counts.get('news', 0) / total_sources * 100) if total_sources > 0 else 0
+    review_pct = round(type_counts.get('review', 0) / total_sources * 100) if total_sources > 0 else 0
+
+    # Get sample sources for examples
+    blog_sources = [s for s in sources if classify_domain(s.domain, s.url) == 'blog'][:3]
+    community_sources = [s for s in sources if classify_domain(s.domain, s.url) == 'community'][:3]
+    news_sources = [s for s in sources if classify_domain(s.domain, s.url) == 'news'][:3]
+
+    # Get comparison prompts
+    comparison_prompts = [p.query for p in all_prompts if any(word in p.query.lower() for word in ['vs', 'versus', 'compare', 'best', 'top'])]
+    unique_comparison = list(set(comparison_prompts))[:5]
+    comparison_pct = round(len(set(comparison_prompts)) / len(set(p.query for p in all_prompts)) * 100) if all_prompts else 0
+
+    # Calculate Wix visibility score for overall AI SEO score
+    jan_prompts = [p for p in all_prompts if p.scraped_at and p.scraped_at.strftime("%Y-%m") == "2026-01"]
+    jan_queries = set(p.query for p in jan_prompts)
+
+    wix_mentioned = 0
+    for query in jan_queries:
+        query_prompts = [p for p in jan_prompts if p.query == query]
+        for prompt in query_prompts:
+            mention = session.exec(
+                select(PromptBrandMention).where(
+                    PromptBrandMention.prompt_id == prompt.id,
+                    PromptBrandMention.brand_id == "wix",
+                    PromptBrandMention.mentioned == True,
+                )
+            ).first()
+            if mention:
+                wix_mentioned += 1
+                break
+
+    visibility_score = round(wix_mentioned / len(jan_queries) * 100) if jan_queries else 0
+
+    # Overall AI SEO score (weighted average)
+    ai_seo_score = min(100, round(visibility_score * 0.9 + 10))  # Base 10 + visibility contribution
+
+    suggestions = [
+        Suggestion(
+            id=1,
+            priority="high",
+            category="content",
+            title="Create More Blog Content",
+            description=f"{blog_pct}% of AI citation sources are blog posts. Publishing regular, in-depth blog content about ecommerce topics significantly increases your chances of being cited by AI systems. Focus on comprehensive guides and tutorials.",
+            stat=f"{blog_pct}%",
+            statLabel="of sources are blogs",
+            action="Start a blog with ecommerce guides, tutorials, and industry insights",
+            examples=[
+                SuggestionExample(type="source", domain=s.domain, title=s.title) for s in blog_sources
+            ] + [
+                SuggestionExample(type="prompt", query=q) for q in unique_comparison[:2]
+            ]
+        ),
+        Suggestion(
+            id=2,
+            priority="medium",
+            category="community",
+            title="Engage on Reddit & Forums",
+            description=f"{community_pct}% of AI citations come from community discussions on Reddit and forums. Participating authentically in relevant subreddits like r/ecommerce, r/shopify, and r/smallbusiness can boost your visibility.",
+            stat=f"{community_pct}%",
+            statLabel="of sources are community sites",
+            action="Join r/ecommerce, r/entrepreneur, and relevant subreddit communities",
+            examples=[
+                SuggestionExample(type="source", domain=s.domain, title=s.title) for s in community_sources
+            ]
+        ),
+        Suggestion(
+            id=3,
+            priority="high",
+            category="authority",
+            title="Get Featured in Industry Publications",
+            description=f"News and industry publications account for {news_pct}% of AI citations. PR efforts, guest posts, and getting featured on authority sites like Forbes, TechCrunch, and Entrepreneur improve AI visibility significantly.",
+            stat=f"{news_pct}%",
+            statLabel="are news/industry sites",
+            action="Pitch stories to ecommerce and tech publications, pursue guest posting opportunities",
+            examples=[
+                SuggestionExample(type="source", domain=s.domain, title=s.title) for s in news_sources
+            ]
+        ),
+        Suggestion(
+            id=4,
+            priority="medium",
+            category="technical",
+            title="Optimize for Comparison Queries",
+            description=f"{comparison_pct}% of tracked prompts are comparison queries (e.g., 'best platform', 'X vs Y'). Creating dedicated comparison pages and landing pages optimized for these queries can improve visibility.",
+            stat=f"{comparison_pct}%",
+            statLabel="of queries compare platforms",
+            action="Build comparison landing pages and feature comparison content",
+            examples=[
+                SuggestionExample(type="prompt", query=q) for q in unique_comparison[:3]
+            ]
+        ),
+        Suggestion(
+            id=5,
+            priority="low",
+            category="content",
+            title="Collect Reviews on G2 & Capterra",
+            description=f"Review platforms account for {review_pct}% of sources. Having strong presence on review sites like G2, Capterra, and Trustpilot provides social proof that AI systems reference.",
+            stat=f"{review_pct}%",
+            statLabel="are review platforms",
+            action="Encourage customers to leave reviews on G2, Capterra, and Trustpilot",
+            examples=[]
+        ),
+    ]
+
+    return SuggestionsResponse(
+        score=ai_seo_score,
+        suggestions=suggestions
+    )
 
 
 @app.get("/api/health")

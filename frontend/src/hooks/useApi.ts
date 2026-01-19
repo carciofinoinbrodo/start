@@ -6,12 +6,16 @@ import {
   fetchSources,
   fetchMetrics,
   fetchVisibilityData,
+  fetchSourcesAnalytics,
+  fetchSuggestions,
   type BrandResponse,
   type PromptResponse,
   type PromptDetailResponse,
   type SourceResponse,
   type DashboardMetricsResponse,
   type DailyVisibilityResponse,
+  type SourcesAnalyticsResponse,
+  type SuggestionsDataResponse,
 } from '../api/client';
 
 interface UseApiState<T> {
@@ -115,6 +119,38 @@ export function useVisibilityData() {
 
   useEffect(() => {
     fetchVisibilityData()
+      .then((data) => setState({ data, loading: false, error: null }))
+      .catch((error) => setState({ data: null, loading: false, error }));
+  }, []);
+
+  return state;
+}
+
+export function useSourcesAnalytics() {
+  const [state, setState] = useState<UseApiState<SourcesAnalyticsResponse>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  useEffect(() => {
+    fetchSourcesAnalytics()
+      .then((data) => setState({ data, loading: false, error: null }))
+      .catch((error) => setState({ data: null, loading: false, error }));
+  }, []);
+
+  return state;
+}
+
+export function useSuggestions() {
+  const [state, setState] = useState<UseApiState<SuggestionsDataResponse>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  useEffect(() => {
+    fetchSuggestions()
       .then((data) => setState({ data, loading: false, error: null }))
       .catch((error) => setState({ data: null, loading: false, error }));
   }, []);

@@ -61,3 +61,65 @@ export interface SearchResultGroup {
   label: string;
   results: SearchResult[];
 }
+
+// Sources Analytics types
+export interface DomainBreakdown {
+  domain: string;
+  citations: number;
+  percentage: number;
+  type: 'brand' | 'blog' | 'community' | 'news' | 'review' | 'other';
+}
+
+export interface SourceType {
+  type: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopSource {
+  id: number;
+  domain: string;
+  url: string;
+  title: string | null;
+  citations: number;
+  prompts: string[];
+}
+
+export interface SourcesSummary {
+  totalSources: number;
+  totalDomains: number;
+  totalCitations: number;
+  avgCitationsPerSource: number;
+}
+
+export interface SourcesAnalytics {
+  summary: SourcesSummary;
+  domainBreakdown: DomainBreakdown[];
+  sourceTypes: SourceType[];
+  topSources: TopSource[];
+}
+
+// Suggestions types
+export interface SuggestionExample {
+  type: 'source' | 'prompt';
+  domain?: string;
+  title?: string;
+  query?: string;
+}
+
+export interface Suggestion {
+  id: number;
+  priority: 'high' | 'medium' | 'low';
+  category: 'content' | 'community' | 'authority' | 'technical';
+  title: string;
+  description: string;
+  stat: string;
+  statLabel: string;
+  action: string;
+  examples: SuggestionExample[];
+}
+
+export interface SuggestionsData {
+  score: number;
+  suggestions: Suggestion[];
+}

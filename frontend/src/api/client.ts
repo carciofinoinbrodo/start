@@ -113,3 +113,73 @@ export async function fetchMetrics(): Promise<DashboardMetricsResponse> {
 export async function fetchVisibilityData(): Promise<DailyVisibilityResponse[]> {
   return fetchJson<DailyVisibilityResponse[]>('/visibility');
 }
+
+// Sources Analytics types
+export interface DomainBreakdownResponse {
+  domain: string;
+  citations: number;
+  percentage: number;
+  type: string;
+}
+
+export interface SourceTypeResponse {
+  type: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopSourceResponse {
+  id: number;
+  domain: string;
+  url: string;
+  title: string | null;
+  citations: number;
+  prompts: string[];
+}
+
+export interface SourcesSummaryResponse {
+  totalSources: number;
+  totalDomains: number;
+  totalCitations: number;
+  avgCitationsPerSource: number;
+}
+
+export interface SourcesAnalyticsResponse {
+  summary: SourcesSummaryResponse;
+  domainBreakdown: DomainBreakdownResponse[];
+  sourceTypes: SourceTypeResponse[];
+  topSources: TopSourceResponse[];
+}
+
+// Suggestions types
+export interface SuggestionExampleResponse {
+  type: string;
+  domain?: string;
+  title?: string;
+  query?: string;
+}
+
+export interface SuggestionResponse {
+  id: number;
+  priority: string;
+  category: string;
+  title: string;
+  description: string;
+  stat: string;
+  statLabel: string;
+  action: string;
+  examples: SuggestionExampleResponse[];
+}
+
+export interface SuggestionsDataResponse {
+  score: number;
+  suggestions: SuggestionResponse[];
+}
+
+export async function fetchSourcesAnalytics(): Promise<SourcesAnalyticsResponse> {
+  return fetchJson<SourcesAnalyticsResponse>('/sources/analytics');
+}
+
+export async function fetchSuggestions(): Promise<SuggestionsDataResponse> {
+  return fetchJson<SuggestionsDataResponse>('/suggestions');
+}

@@ -93,3 +93,73 @@ class DailyVisibilityResponse(BaseModel):
     bigcommerce: float | None = None
     wix: float | None = None
     squarespace: float | None = None
+
+
+# Sources Analytics schemas
+class DomainBreakdown(BaseModel):
+    """Domain with citation stats"""
+    domain: str
+    citations: int
+    percentage: float
+    type: str  # 'brand', 'blog', 'community', 'news', 'official', 'other'
+
+
+class SourceType(BaseModel):
+    """Source type breakdown"""
+    type: str
+    count: int
+    percentage: float
+
+
+class TopSource(BaseModel):
+    """Top source with detailed info"""
+    id: int
+    domain: str
+    url: str
+    title: str | None
+    citations: int
+    prompts: list[str]
+
+
+class SourcesSummary(BaseModel):
+    """Summary stats for sources"""
+    totalSources: int
+    totalDomains: int
+    totalCitations: int
+    avgCitationsPerSource: float
+
+
+class SourcesAnalyticsResponse(BaseModel):
+    """Full sources analytics response"""
+    summary: SourcesSummary
+    domainBreakdown: list[DomainBreakdown]
+    sourceTypes: list[SourceType]
+    topSources: list[TopSource]
+
+
+# Suggestions schemas
+class SuggestionExample(BaseModel):
+    """Example source or prompt for a suggestion"""
+    type: str  # 'source' or 'prompt'
+    domain: str | None = None
+    title: str | None = None
+    query: str | None = None
+
+
+class Suggestion(BaseModel):
+    """AI SEO improvement suggestion"""
+    id: int
+    priority: str  # 'high', 'medium', 'low'
+    category: str  # 'content', 'community', 'authority', 'technical'
+    title: str
+    description: str
+    stat: str
+    statLabel: str
+    action: str
+    examples: list[SuggestionExample]
+
+
+class SuggestionsResponse(BaseModel):
+    """Suggestions with overall score"""
+    score: int
+    suggestions: list[Suggestion]

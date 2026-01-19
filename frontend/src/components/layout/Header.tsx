@@ -32,10 +32,14 @@ export function Header({ title, subtitle }: HeaderProps) {
           </div>
 
           {/* Notifications */}
-          <button className="relative p-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] transition-all duration-200">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[var(--danger)] rounded-full ring-2 ring-[var(--bg-primary)]"></span>
-          </button>
+          <div className="relative group">
+            <button className="relative p-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] transition-all duration-200">
+              <Bell className="w-5 h-5" />
+            </button>
+            <div className="absolute right-0 top-full mt-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              Coming soon
+            </div>
+          </div>
         </div>
       </div>
     </header>
