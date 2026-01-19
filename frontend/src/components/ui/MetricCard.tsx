@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Link } from 'react-router';
+import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface MetricCardProps {
@@ -9,6 +10,8 @@ interface MetricCardProps {
   changeLabel?: string;
   icon: LucideIcon;
   delay?: number;
+  linkTo?: string;
+  linkLabel?: string;
 }
 
 function easeOutCubic(t: number): number {
@@ -55,7 +58,7 @@ function useCountUp(end: number, duration: number = 600, delay: number = 0) {
   return count;
 }
 
-export function MetricCard({ label, value, change, changeLabel, icon: Icon, delay = 0 }: MetricCardProps) {
+export function MetricCard({ label, value, change, changeLabel, icon: Icon, delay = 0, linkTo, linkLabel }: MetricCardProps) {
   const isPositive = change && change > 0;
   const isNegative = change && change < 0;
 
@@ -110,6 +113,18 @@ export function MetricCard({ label, value, change, changeLabel, icon: Icon, dela
             </span>
           </div>
           <span className="text-xs text-[var(--text-muted)]">vs last month</span>
+        </div>
+      )}
+
+      {linkTo && (
+        <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+          <Link
+            to={linkTo}
+            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-sm font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span>{linkLabel || 'View'}</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
       )}
     </div>

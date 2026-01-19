@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router';
-import { LayoutDashboard, MessageSquareText, Settings, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Globe, Lightbulb, Settings, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/prompts', icon: MessageSquareText, label: 'Prompts' },
+  { to: '/sources', icon: Globe, label: 'Sources' },
+  { to: '/suggestions', icon: Lightbulb, label: 'Suggestions' },
 ];
 
 interface SidebarProps {
@@ -107,13 +109,17 @@ export function Sidebar({
 
       {/* Settings - below navigation with separator */}
       <div className="p-2 border-t border-[var(--border-subtle)]">
-        <button
-          className={`sidebar-nav-item w-full ${isCollapsed ? 'justify-center px-3' : ''}`}
+        <NavLink
+          to="/settings"
+          onClick={isOverlay ? onClose : undefined}
+          className={({ isActive }) =>
+            `sidebar-nav-item w-full ${isActive ? 'active' : ''} ${isCollapsed ? 'justify-center px-3' : ''}`
+          }
           title={isCollapsed ? 'Settings' : undefined}
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
           {!isCollapsed && 'Settings'}
-        </button>
+        </NavLink>
       </div>
 
       {/* Spacer to push content up */}

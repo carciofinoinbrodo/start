@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Eye, FileText, Globe, Hash, Loader2 } from 'lucide-react';
+import { Link } from 'react-router';
+import { Eye, FileText, Globe, Hash, Loader2, ChevronRight } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
 import { DataTable } from '../components/ui/DataTable';
@@ -210,6 +211,8 @@ export function Dashboard() {
             value={metricsData?.totalPrompts.value ?? 0}
             icon={FileText}
             delay={300}
+            linkTo="/prompts"
+            linkLabel="View Prompts"
           />
           <MetricCard
             label="Sources Cited"
@@ -251,9 +254,18 @@ export function Dashboard() {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 animate-fade-in-up" style={{ animationDelay: '800ms' }}>
-              Top Sources
-            </h3>
+            <div className="flex items-center justify-between mb-4 animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                Top Sources
+              </h3>
+              <Link
+                to="/sources"
+                className="flex items-center gap-1 text-sm text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] transition-colors"
+              >
+                <span>View All</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
             <DataTable
               columns={sourceColumns}
               data={sources.slice(0, 5)}
