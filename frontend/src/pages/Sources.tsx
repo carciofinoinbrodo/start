@@ -6,6 +6,7 @@ import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
 import { SourcesSkeleton } from '../components/ui/Skeleton';
 import { useSourcesAnalytics } from '../hooks/useApi';
+import { config } from '../config';
 
 const TYPE_COLORS: Record<string, string> = {
   brand: '#f59e0b',
@@ -101,7 +102,7 @@ export function Sources() {
         <div className="p-8">
           <div className="glass-card p-12 text-center">
             <p className="text-red-400 mb-2">Failed to load sources data</p>
-            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at localhost:8000</p>
+            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at {config.apiHost}</p>
           </div>
         </div>
       </div>

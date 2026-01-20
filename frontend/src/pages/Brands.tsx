@@ -19,6 +19,7 @@ import { BrandsSkeleton } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { useBrandsDetails } from '../hooks/useApi';
 import { createBrand, type BrandCreateRequest, type BrandDetailResponse } from '../api/client';
+import { config } from '../config';
 
 const TREND_ICONS = {
   up: TrendingUp,
@@ -503,7 +504,7 @@ export function Brands() {
           <div className="glass-card p-12 text-center">
             <p className="text-red-400 mb-2">Failed to load brands data</p>
             <p className="text-sm text-[var(--text-muted)]">
-              Make sure the backend is running at localhost:8000
+              Make sure the backend is running at {config.apiHost}
             </p>
           </div>
         </div>

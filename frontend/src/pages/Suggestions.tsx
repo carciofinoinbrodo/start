@@ -1,6 +1,7 @@
 import { Lightbulb, Loader2, FileText, Users, Award, Wrench, Star, Globe, MessageSquare } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { useSuggestions } from '../hooks/useApi';
+import { config } from '../config';
 
 const PRIORITY_COLORS = {
   high: { bg: 'rgba(239, 68, 68, 0.15)', text: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' },
@@ -52,7 +53,7 @@ export function Suggestions() {
         <div className="p-8">
           <div className="glass-card p-12 text-center">
             <p className="text-red-400 mb-2">Failed to load suggestions</p>
-            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at localhost:8000</p>
+            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at {config.apiHost}</p>
           </div>
         </div>
       </div>

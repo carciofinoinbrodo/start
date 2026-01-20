@@ -6,6 +6,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Header } from '../components/layout/Header';
 import { SentimentBadge } from '../components/ui/Badge';
 import { usePrompts, useBrands, usePromptDetail } from '../hooks/useApi';
+import { config } from '../config';
 import type { PromptResponse } from '../api/client';
 
 interface PromptBrandMention {
@@ -481,7 +482,7 @@ export function Prompts() {
         {promptsError && (
           <div className="glass-card p-12 text-center animate-fade-in">
             <p className="text-red-400 mb-2">Failed to load data</p>
-            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at localhost:8000</p>
+            <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at {config.apiHost}</p>
           </div>
         )}
 
