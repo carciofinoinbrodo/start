@@ -6,9 +6,11 @@ from pathlib import Path
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Render uses postgres:// but SQLAlchemy needs postgresql://
+    # Render uses postgres:// but SQLAlchemy needs postgresql+psycopg:// for psycopg3
     if DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+    elif DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
     # PostgreSQL doesn't need check_same_thread
     engine = create_engine(DATABASE_URL)
 else:
