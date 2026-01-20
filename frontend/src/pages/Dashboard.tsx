@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { Eye, FileText, Globe, Hash, Loader2, ChevronRight } from 'lucide-react';
+import { Eye, FileText, Globe, Hash, ChevronRight } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
 import { DataTable } from '../components/ui/DataTable';
 import { TrendBadge, SentimentBadge } from '../components/ui/Badge';
 import { VisibilityChart } from '../components/charts/VisibilityChart';
+import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { useBrands, useSources, useMetrics, useVisibilityData } from '../hooks/useApi';
 import type { DailyVisibility } from '../types';
 
@@ -173,12 +174,7 @@ export function Dashboard() {
           title="Dashboard"
           subtitle="Track how AI search engines cite your brand vs competitors"
         />
-        <div className="p-8 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[var(--accent-primary)]" />
-            <p className="text-[var(--text-muted)]">Loading dashboard data...</p>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </div>
     );
   }

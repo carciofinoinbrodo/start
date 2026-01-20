@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
-import { Globe, Database, Link2, BarChart3, Loader2, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
+import { Globe, Database, Link2, BarChart3, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Header } from '../components/layout/Header';
 import { MetricCard } from '../components/ui/MetricCard';
+import { SourcesSkeleton } from '../components/ui/Skeleton';
 import { useSourcesAnalytics } from '../hooks/useApi';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -85,12 +86,7 @@ export function Sources() {
           title="Sources Analytics"
           subtitle="Analyze citation sources from AI responses"
         />
-        <div className="p-8 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[var(--accent-primary)]" />
-            <p className="text-[var(--text-muted)]">Loading sources data...</p>
-          </div>
-        </div>
+        <SourcesSkeleton />
       </div>
     );
   }

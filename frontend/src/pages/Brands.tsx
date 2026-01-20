@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router';
 import {
-  Loader2,
   Plus,
   Trash2,
   ChevronDown,
@@ -12,12 +11,14 @@ import {
   Minus,
   X,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Header } from '../components/layout/Header';
+import { BrandsSkeleton } from '../components/ui/Skeleton';
+import { useToast } from '../components/ui/Toast';
 import { useBrandsDetails } from '../hooks/useApi';
-import { createBrand, type BrandCreateRequest } from '../api/client';
-import type { BrandDetail } from '../types';
+import { createBrand, type BrandCreateRequest, type BrandDetailResponse } from '../api/client';
 
 const TREND_ICONS = {
   up: TrendingUp,
@@ -224,14 +225,15 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
 }
 
 interface BrandRowProps {
-  brand: BrandDetail;
+  brand: BrandDetailResponse;
   isExpanded: boolean;
   onToggle: () => void;
 }
 
 function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
-  const TrendIcon = TREND_ICONS[brand.trend];
-  const trendColor = TREND_COLORS[brand.trend];
+  const trendKey = brand.trend as keyof typeof TREND_ICONS;
+  const TrendIcon = TREND_ICONS[trendKey] || TREND_ICONS.stable;
+  const trendColor = TREND_COLORS[trendKey] || TREND_COLORS.stable;
   const sentimentStyle = SENTIMENT_COLORS[brand.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral;
 
   return (
@@ -386,7 +388,7 @@ function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
                           borderRadius: '8px',
                         }}
                         itemStyle={{ color: '#e2e8f0' }}
-                        formatter={(value: number) => [`${value}%`, 'Visibility']}
+                        formatter={(value) => [`${value}%`, 'Visibility']}
                       />
                       <Area
                         type="monotone"
@@ -427,6 +429,7 @@ export function Brands() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const toast = useToast();
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -473,20 +476,21 @@ export function Brands() {
   };
 
   const handleAddBrand = async (brandData: BrandCreateRequest) => {
-    await createBrand(brandData);
-    refetch();
+    try {
+      await createBrand(brandData);
+      refetch();
+      toast.success(`Brand "${brandData.name}" added successfully!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add brand');
+      throw err;
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen">
         <Header title="Brand Management" subtitle="Track and manage brands in AI responses" />
-        <div className="p-8 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[var(--accent-primary)]" />
-            <p className="text-[var(--text-muted)]">Loading brands data...</p>
-          </div>
-        </div>
+        <BrandsSkeleton />
       </div>
     );
   }

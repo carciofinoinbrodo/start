@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 
 type SortDirection = 'asc' | 'desc' | null;
 
@@ -19,6 +20,11 @@ interface DataTableProps<T> {
   keyExtractor: (item: T) => string;
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
+  emptyDescription?: string;
+  emptyActionLabel?: string;
+  emptyActionHref?: string;
+  onEmptyAction?: () => void;
+  emptyIcon?: ReactNode;
   animationDelay?: number;
   isPinned?: (item: T) => boolean;
 }
@@ -29,6 +35,11 @@ export function DataTable<T>({
   keyExtractor,
   onRowClick,
   emptyMessage = 'No data available',
+  emptyDescription,
+  emptyActionLabel,
+  emptyActionHref,
+  onEmptyAction,
+  emptyIcon,
   animationDelay = 0,
   isPinned,
 }: DataTableProps<T>) {
@@ -83,8 +94,15 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="glass-card p-8 text-center">
-        <p className="text-[var(--text-muted)]">{emptyMessage}</p>
+      <div className="glass-card">
+        <EmptyState
+          icon={emptyIcon}
+          title={emptyMessage}
+          description={emptyDescription}
+          actionLabel={emptyActionLabel}
+          actionHref={emptyActionHref}
+          onAction={onEmptyAction}
+        />
       </div>
     );
   }

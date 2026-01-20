@@ -7,13 +7,25 @@ import { useClickOutside } from '../../hooks/useClickOutside';
 import { SearchResults } from './SearchResults';
 import type { SearchResult } from '../../types';
 
-export function GlobalSearch() {
+interface GlobalSearchProps {
+  autoFocus?: boolean;
+  onClose?: () => void;
+}
+
+export function GlobalSearch({ autoFocus, onClose }: GlobalSearchProps = {}) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Auto focus on mount if requested
+  useEffect(() => {
+    if (autoFocus) {
+      inputRef.current?.focus();
+    }
+  }, [autoFocus]);
 
   const debouncedQuery = useDebounce(query, 300);
   const { results, totalResults } = useGlobalSearch(debouncedQuery);
@@ -45,7 +57,8 @@ export function GlobalSearch() {
     navigate(result.href);
     setQuery('');
     setIsOpen(false);
-  }, [navigate]);
+    onClose?.();
+  }, [navigate, onClose]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
@@ -68,6 +81,7 @@ export function GlobalSearch() {
       case 'Escape':
         setIsOpen(false);
         inputRef.current?.blur();
+        onClose?.();
         break;
     }
   };

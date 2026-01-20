@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { Search, ChevronDown, ChevronRight, ChevronUp, ExternalLink, Loader2, Calendar, Plus } from 'lucide-react';
+import { PromptsSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import { Header } from '../components/layout/Header';
 import { SentimentBadge } from '../components/ui/Badge';
 import { usePrompts, useBrands, usePromptDetail } from '../hooks/useApi';
@@ -466,19 +468,14 @@ export function Prompts() {
               <Plus className="w-4 h-4" />
               Add Prompt
             </button>
-            <div className="absolute right-0 top-full mt-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover/addprompt:opacity-100 group-hover/addprompt:visible transition-all duration-200 z-50 shadow-lg">
+            <div className="absolute right-0 bottom-full mb-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover/addprompt:opacity-100 group-hover/addprompt:visible transition-all duration-200 z-50 shadow-lg">
               Coming soon!
             </div>
           </div>
         </div>
 
         {/* Loading State */}
-        {isLoading && (
-          <div className="glass-card p-12 text-center animate-fade-in">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[var(--accent-primary)]" />
-            <p className="text-[var(--text-muted)]">Loading prompts...</p>
-          </div>
-        )}
+        {isLoading && <PromptsSkeleton />}
 
         {/* Error State */}
         {promptsError && (
@@ -568,9 +565,10 @@ export function Prompts() {
               </table>
 
               {filteredPrompts.length === 0 && (
-                <div className="p-8 text-center">
-                  <p className="text-[var(--text-muted)]">No prompts found matching your search.</p>
-                </div>
+                <EmptyState
+                  title={searchQuery ? "No prompts found" : "No prompts yet"}
+                  description={searchQuery ? `No prompts matching "${searchQuery}"` : "Run your first AI search analysis to see prompts here."}
+                />
               )}
             </div>
           </div>

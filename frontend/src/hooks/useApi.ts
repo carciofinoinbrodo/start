@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type DependencyList } from 'react';
 import {
   fetchBrands,
   fetchPrompts,
@@ -26,157 +26,87 @@ interface UseApiState<T> {
   error: Error | null;
 }
 
-export function useBrands() {
-  const [state, setState] = useState<UseApiState<BrandResponse[]>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchBrands()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
+interface UseApiQueryOptions {
+  enabled?: boolean;
 }
 
-export function usePrompts() {
-  const [state, setState] = useState<UseApiState<PromptResponse[]>>({
+/**
+ * Generic hook factory for API queries.
+ * Reduces code duplication across all data-fetching hooks.
+ */
+function useApiQuery<T>(
+  fetcher: () => Promise<T>,
+  deps: DependencyList = [],
+  options: UseApiQueryOptions = {}
+) {
+  const { enabled = true } = options;
+  const [state, setState] = useState<UseApiState<T>>({
     data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchPrompts()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
-}
-
-export function usePromptDetail(promptId: number | null) {
-  const [state, setState] = useState<UseApiState<PromptDetailResponse>>({
-    data: null,
-    loading: false,
-    error: null,
-  });
-
-  useEffect(() => {
-    if (promptId === null) {
-      setState({ data: null, loading: false, error: null });
-      return;
-    }
-
-    setState({ data: null, loading: true, error: null });
-    fetchPromptDetail(promptId)
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, [promptId]);
-
-  return state;
-}
-
-export function useSources() {
-  const [state, setState] = useState<UseApiState<SourceResponse[]>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchSources()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
-}
-
-export function useMetrics() {
-  const [state, setState] = useState<UseApiState<DashboardMetricsResponse>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchMetrics()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
-}
-
-export function useVisibilityData() {
-  const [state, setState] = useState<UseApiState<DailyVisibilityResponse[]>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchVisibilityData()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
-}
-
-export function useSourcesAnalytics() {
-  const [state, setState] = useState<UseApiState<SourcesAnalyticsResponse>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchSourcesAnalytics()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
-}
-
-export function useSuggestions() {
-  const [state, setState] = useState<UseApiState<SuggestionsDataResponse>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    fetchSuggestions()
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
-
-  return state;
-}
-
-export function useBrandsDetails() {
-  const [state, setState] = useState<UseApiState<BrandsListResponse>>({
-    data: null,
-    loading: true,
+    loading: enabled,
     error: null,
   });
 
   const refetch = useCallback(() => {
-    setState(prev => ({ ...prev, loading: true }));
-    fetchBrandsDetails()
+    if (!enabled) return;
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    fetcher()
       .then((data) => setState({ data, loading: false, error: null }))
       .catch((error) => setState({ data: null, loading: false, error }));
-  }, []);
+  }, [fetcher, enabled]);
 
   useEffect(() => {
+    if (!enabled) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
     refetch();
-  }, [refetch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, ...deps]);
 
   return { ...state, refetch };
+}
+
+// ============================================
+// Exported hooks using the generic factory
+// ============================================
+
+export function useBrands() {
+  return useApiQuery<BrandResponse[]>(fetchBrands);
+}
+
+export function usePrompts() {
+  return useApiQuery<PromptResponse[]>(fetchPrompts);
+}
+
+export function usePromptDetail(promptId: number | null) {
+  const fetcher = useCallback(() => fetchPromptDetail(promptId!), [promptId]);
+  return useApiQuery<PromptDetailResponse>(
+    fetcher,
+    [promptId],
+    { enabled: promptId !== null }
+  );
+}
+
+export function useSources() {
+  return useApiQuery<SourceResponse[]>(fetchSources);
+}
+
+export function useMetrics() {
+  return useApiQuery<DashboardMetricsResponse>(fetchMetrics);
+}
+
+export function useVisibilityData() {
+  return useApiQuery<DailyVisibilityResponse[]>(fetchVisibilityData);
+}
+
+export function useSourcesAnalytics() {
+  return useApiQuery<SourcesAnalyticsResponse>(fetchSourcesAnalytics);
+}
+
+export function useSuggestions() {
+  return useApiQuery<SuggestionsDataResponse>(fetchSuggestions);
+}
+
+export function useBrandsDetails() {
+  return useApiQuery<BrandsListResponse>(fetchBrandsDetails);
 }
