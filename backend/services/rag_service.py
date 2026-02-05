@@ -430,3 +430,262 @@ Consider:
             })
 
         return sorted(competitors, key=lambda x: x["visibility"], reverse=True)
+
+    # --- V2 Methods for Enhanced SEO Professional Dashboard ---
+
+    def build_brand_context_v2(self, brand: Brand, metrics: dict) -> str:
+        """
+        Build enhanced STATIC brand context for V2 (SEO professionals).
+
+        Cached by Claude for 90% cost reduction.
+        """
+        return f"""# GEO Strategy Analysis Framework
+
+## Brand Profile
+- **Brand:** {brand.name}
+- **Industry:** E-commerce platforms
+- **Type:** {"Primary brand under analysis" if brand.type == "primary" else "Competitor benchmark"}
+
+## GEO Optimization Framework (2026 Best Practices)
+
+You are an expert GEO (Generative Engine Optimization) strategist. Your analysis must be:
+- SPECIFIC and ACTIONABLE (no generic advice like "create quality content")
+- Based on the DATA provided (reference actual queries, competitors, sources)
+- Prioritized by IMPACT (what moves the needle most)
+
+### Key GEO Ranking Factors
+
+1. **Share of Voice** - Being cited as THE primary source in AI responses
+   - Answer-First Content: 40-60 word direct answers at section starts
+   - Q&A Format: Structure matching how users ask questions
+
+2. **Structured Data** - AI-parseable content
+   - FAQ schema for common questions
+   - HowTo schema for tutorials
+   - Product/Review schemas for commerce
+
+3. **E-E-A-T Evidence** - Demonstrable expertise
+   - Author credentials and profiles
+   - Real testimonials with specifics
+   - Data-backed claims
+
+4. **Technical GEO** - AI crawler optimization
+   - llms.txt file for AI crawler guidance
+   - Clean HTML structure
+   - Fast page load times
+
+5. **Authority Building** - Third-party validation
+   - Industry publication mentions
+   - High-authority review sites
+   - Community presence (Reddit, forums)
+
+### Output Requirements
+- NO generic advice - every recommendation must reference actual data
+- NO percentage stats in recommendations - focus on actions
+- Include specific URLs, queries, and implementation steps
+- Prioritize by impact and effort"""
+
+    def build_analysis_context_v2(
+        self,
+        brand: Brand,
+        similar_prompts: list[Prompt],
+        metrics: dict
+    ) -> str:
+        """
+        Build enhanced DYNAMIC analysis context for V2.
+
+        Focuses on actionable data without percentage stats.
+        """
+        now = datetime.utcnow().isoformat()
+
+        # Format competitor data
+        competitors_text = self._format_competitors_v2(metrics.get('competitors', []))
+
+        # Format queries where brand is absent
+        absent_queries = self._get_absent_queries(brand.id, limit=10)
+        absent_text = self._format_absent_queries(absent_queries)
+
+        # Format top citing domains
+        top_domains = self._get_top_citing_domains(limit=10)
+        domains_text = self._format_top_domains(top_domains)
+
+        # Format sample prompts
+        prompts_text = self._format_prompts_v2(similar_prompts)
+
+        return f"""# Analysis Data for {brand.name}
+
+## Timestamp
+{now}
+
+## Current Performance
+- Mentioned in {metrics.get('total_mentions', 0)} of {metrics.get('total_prompts', 0)} tracked AI queries
+- Average citation position: {metrics.get('avg_position', 0):.1f} (lower is better)
+- Sentiment: {metrics.get('sentiment', 'neutral')}
+- Trend: {metrics.get('trend', 'stable')}
+
+## Competitor Comparison
+{competitors_text}
+
+## Top Domains Cited by AI (that you should be present in)
+{domains_text}
+
+## Queries Where {brand.name} is ABSENT (but competitors appear)
+{absent_text}
+
+## Sample AI Responses (for context)
+{prompts_text}
+
+---
+
+## Your Task
+
+Generate a complete GEO strategy for {brand.name} with these sections:
+
+### 1. Strategic Summary
+- **headline**: One-line current state (e.g., "Strong in informational, weak in commercial queries")
+- **key_insight**: Single most important finding
+- **biggest_opportunity**: Highest-impact opportunity
+- **biggest_threat**: Most urgent competitive threat
+- **recommended_focus**: What to prioritize in the next 30 days
+
+### 2. Quick Wins (3-5)
+Actions completable in 1-8 hours:
+- Name exact pages/changes when possible
+- Include step-by-step implementation
+- Estimate effort in hours
+- Describe expected outcome
+
+### 3. Content Opportunities (5-10)
+Topics to create or optimize:
+- Include target queries (actual search terms)
+- Explain competitor gap for each
+- Provide brief content outline
+- Estimate effort in days
+- Rate impact: low/medium/high/critical
+
+### 4. Competitor Gaps (3-6)
+Where competitors are outperforming:
+- Name the competitor
+- Describe the gap with evidence
+- Provide specific action to close
+- Classify urgency: immediate/this-quarter/long-term
+
+### 5. Technical GEO Checklist (5-10)
+Technical optimizations for AI visibility:
+- llms.txt status
+- Schema markup opportunities
+- Content structure issues
+- Mark status: done/missing/needs-improvement
+
+### 6. Outreach Targets (5-10)
+Publications/communities to pursue:
+- Focus on sources AI systems actually cite
+- Include relevant subreddits, blogs, review sites
+- Explain why each matters
+- Provide specific action to take
+
+IMPORTANT: Base all recommendations on the actual data above. No generic advice."""
+
+    def _format_competitors_v2(self, competitors: list[dict]) -> str:
+        """Format competitor data for V2 (without percentage emphasis)"""
+        if not competitors:
+            return "No competitor data available."
+
+        lines = []
+        for comp in competitors:
+            name = comp.get('name', 'Unknown')
+            mentions = comp.get('total_mentions', 0)
+            pos = comp.get('avg_position', 0)
+            lines.append(f"- **{name}**: Mentioned in AI responses, avg position {pos:.1f}")
+
+        return "\n".join(lines)
+
+    def _get_absent_queries(self, brand_id: str, limit: int = 10) -> list[str]:
+        """Get queries where this brand is NOT mentioned but competitors are"""
+        # Get all prompts
+        all_prompts = list(self.session.exec(select(Prompt)).all())
+
+        # Get prompts where this brand is mentioned
+        brand_mentions = self.session.exec(
+            select(PromptBrandMention.prompt_id)
+            .where(PromptBrandMention.brand_id == brand_id)
+            .where(PromptBrandMention.mentioned == True)
+        ).all()
+        mentioned_prompt_ids = set(brand_mentions)
+
+        # Get prompts where competitors ARE mentioned (but not this brand)
+        absent_queries = []
+        for prompt in all_prompts:
+            if prompt.id not in mentioned_prompt_ids:
+                # Check if any competitor is mentioned in this prompt
+                competitor_mentions = self.session.exec(
+                    select(PromptBrandMention)
+                    .where(PromptBrandMention.prompt_id == prompt.id)
+                    .where(PromptBrandMention.mentioned == True)
+                    .where(PromptBrandMention.brand_id != brand_id)
+                ).first()
+                if competitor_mentions:
+                    absent_queries.append(prompt.query)
+
+        # Return unique queries
+        return list(set(absent_queries))[:limit]
+
+    def _format_absent_queries(self, queries: list[str]) -> str:
+        """Format absent queries for the prompt"""
+        if not queries:
+            return "Brand appears in most tracked queries."
+
+        lines = []
+        for q in queries:
+            lines.append(f'- "{q}"')
+        return "\n".join(lines)
+
+    def _get_top_citing_domains(self, limit: int = 10) -> list[dict]:
+        """Get the most frequently cited domains in AI responses"""
+        sources = list(self.session.exec(select(Source)).all())
+
+        domain_counts = Counter(s.domain for s in sources if s.domain)
+        top_domains = []
+
+        for domain, count in domain_counts.most_common(limit):
+            # Classify the domain
+            source_type = self._get_source_type(domain, "")
+            top_domains.append({
+                "domain": domain,
+                "citations": count,
+                "type": source_type
+            })
+
+        return top_domains
+
+    def _format_top_domains(self, domains: list[dict]) -> str:
+        """Format top domains for the prompt"""
+        if not domains:
+            return "No domain data available."
+
+        lines = []
+        for d in domains:
+            lines.append(f"- {d['domain']} ({d['type']}, cited {d['citations']}x)")
+        return "\n".join(lines)
+
+    def _format_prompts_v2(self, prompts: list[Prompt]) -> str:
+        """Format prompts for V2 context (more concise)"""
+        if not prompts:
+            return "No sample prompts available."
+
+        lines = []
+        for i, prompt in enumerate(prompts[:5], 1):
+            lines.append(f'{i}. "{prompt.query}"')
+        return "\n".join(lines)
+
+    def calculate_brand_metrics_v2(self, brand_id: str) -> dict:
+        """
+        Calculate comprehensive metrics for V2 (includes total_prompts).
+        """
+        metrics = self.calculate_brand_metrics(brand_id)
+
+        # Add total prompts count
+        all_prompts = list(self.session.exec(select(Prompt)).all())
+        metrics['total_prompts'] = len(set(p.query for p in all_prompts))
+
+        return metrics

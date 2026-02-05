@@ -283,3 +283,223 @@ class GenerateSuggestionsRequest(BaseModel):
         default=False,
         description="Force regeneration even if cached suggestions exist"
     )
+
+
+# --- AI Suggestions V2 Schemas (Enhanced for SEO Professionals) ---
+
+class StrategicSummary(BaseModel):
+    """Executive summary for quick understanding"""
+    headline: str = Field(
+        description="One-line summary of current state (e.g., 'Strong in informational, weak in commercial queries')"
+    )
+    key_insight: str = Field(
+        description="The single most important insight from the analysis"
+    )
+    biggest_opportunity: str = Field(
+        description="The highest-impact opportunity identified"
+    )
+    biggest_threat: str = Field(
+        description="The most urgent competitive threat"
+    )
+    recommended_focus: str = Field(
+        description="What to focus on in the next 30 days"
+    )
+
+
+class QuickWin(BaseModel):
+    """Immediate action (1-8 hours effort)"""
+    action: str = Field(
+        description="Specific, actionable task (e.g., 'Add FAQ schema to pricing page')"
+    )
+    target_page: str | None = Field(
+        default=None,
+        description="Specific URL to optimize, or None for site-wide"
+    )
+    effort_hours: float = Field(
+        ge=0.5, le=8,
+        description="Estimated hours to complete (0.5-8)"
+    )
+    expected_outcome: str = Field(
+        description="What will improve after this action"
+    )
+    steps: list[str] = Field(
+        description="Step-by-step implementation guide"
+    )
+
+
+class ContentOpportunity(BaseModel):
+    """Content piece to create or optimize"""
+    topic: str = Field(
+        description="Content topic or title (e.g., 'Wix vs Shopify comparison guide')"
+    )
+    action_type: Literal["create", "optimize", "expand"] = Field(
+        description="What to do with this content"
+    )
+    target_queries: list[str] = Field(
+        description="Specific queries this content should capture"
+    )
+    competitor_gap: str | None = Field(
+        default=None,
+        description="How competitors are currently winning this topic"
+    )
+    content_brief: str = Field(
+        description="2-3 sentence brief of what the content should cover"
+    )
+    effort_days: float = Field(
+        ge=0.5, le=30,
+        description="Estimated days to complete"
+    )
+    impact: Literal["low", "medium", "high", "critical"] = Field(
+        description="Expected impact on AI visibility"
+    )
+
+
+class CompetitorGap(BaseModel):
+    """Gap where a competitor is outperforming"""
+    competitor: str = Field(description="Name of the competitor")
+    gap_type: Literal["content", "authority", "technical", "sentiment"] = Field(
+        description="Category of the gap"
+    )
+    description: str = Field(
+        description="Detailed description of the gap"
+    )
+    action_to_close: str = Field(
+        description="Specific action to close this gap"
+    )
+    urgency: Literal["immediate", "this-quarter", "long-term"] = Field(
+        description="How urgently this should be addressed"
+    )
+    evidence: list[str] = Field(
+        default=[],
+        description="Data points or URLs supporting this gap"
+    )
+
+
+class TechnicalCheck(BaseModel):
+    """Technical GEO optimization item"""
+    check: str = Field(
+        description="Name of the check (e.g., 'llms.txt file implemented')"
+    )
+    status: Literal["done", "missing", "needs-improvement"] = Field(
+        description="Current status"
+    )
+    priority: Literal["critical", "important", "nice-to-have"] = Field(
+        description="Priority level"
+    )
+    how_to_fix: str = Field(
+        description="How to implement or fix this"
+    )
+    effort: str = Field(
+        description="Time estimate (e.g., '30 minutes', '2 hours')"
+    )
+
+
+class OutreachTarget(BaseModel):
+    """Publication/community to pursue for authority building"""
+    name: str = Field(
+        description="Name of the target (e.g., 'r/ecommerce', 'Forbes')"
+    )
+    type: Literal["publication", "blog", "podcast", "community", "review-site"] = Field(
+        description="Type of target"
+    )
+    why: str = Field(
+        description="Why this target matters for AI visibility"
+    )
+    action: str = Field(
+        description="Specific action to take"
+    )
+
+
+class AISuggestionsResponseV2(BaseModel):
+    """
+    Enhanced AI suggestions for SEO professionals.
+    Focuses on actionable insights, not percentages.
+    """
+    brand: str = Field(description="Brand being analyzed")
+    generated_at: datetime = Field(description="When these suggestions were generated")
+    model_used: str = Field(description="LLM model used for generation")
+
+    strategic_summary: StrategicSummary = Field(
+        description="Executive-level strategic summary"
+    )
+    quick_wins: list[QuickWin] = Field(
+        description="3-5 immediate actions that can be done today"
+    )
+    content_opportunities: list[ContentOpportunity] = Field(
+        description="5-10 content opportunities ranked by impact"
+    )
+    competitor_gaps: list[CompetitorGap] = Field(
+        description="3-6 specific gaps where competitors are winning"
+    )
+    technical_checklist: list[TechnicalCheck] = Field(
+        description="5-10 technical GEO optimization checks"
+    )
+    outreach_targets: list[OutreachTarget] = Field(
+        description="5-10 publications/communities to pursue"
+    )
+
+
+# --- Split API Response Schemas (one per widget) ---
+
+class GeoSectionBase(BaseModel):
+    """Base for all GEO section responses"""
+    brand: str = Field(description="Brand being analyzed")
+    generated_at: datetime = Field(description="When this section was generated")
+    model_used: str = Field(description="LLM model used")
+
+
+class StrategicSummarySection(GeoSectionBase):
+    """Response for /api/geo/strategic-summary"""
+    data: StrategicSummary
+
+
+class QuickWinsSection(GeoSectionBase):
+    """Response for /api/geo/quick-wins"""
+    data: list[QuickWin]
+
+
+class ContentOpportunitiesSection(GeoSectionBase):
+    """Response for /api/geo/content-opportunities"""
+    data: list[ContentOpportunity]
+
+
+class CompetitorGapsSection(GeoSectionBase):
+    """Response for /api/geo/competitor-gaps"""
+    data: list[CompetitorGap]
+
+
+class TechnicalChecklistSection(GeoSectionBase):
+    """Response for /api/geo/technical-checklist"""
+    data: list[TechnicalCheck]
+
+
+class OutreachTargetsSection(GeoSectionBase):
+    """Response for /api/geo/outreach-targets"""
+    data: list[OutreachTarget]
+
+
+# --- LLM Output Wrappers (for structured output parsing) ---
+
+class QuickWinsList(BaseModel):
+    """Wrapper for LLM to generate list of quick wins"""
+    items: list[QuickWin]
+
+
+class ContentOpportunitiesList(BaseModel):
+    """Wrapper for LLM to generate list of content opportunities"""
+    items: list[ContentOpportunity]
+
+
+class CompetitorGapsList(BaseModel):
+    """Wrapper for LLM to generate list of competitor gaps"""
+    items: list[CompetitorGap]
+
+
+class TechnicalChecksList(BaseModel):
+    """Wrapper for LLM to generate list of technical checks"""
+    items: list[TechnicalCheck]
+
+
+class OutreachTargetsList(BaseModel):
+    """Wrapper for LLM to generate list of outreach targets"""
+    items: list[OutreachTarget]

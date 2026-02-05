@@ -38,6 +38,27 @@ from schemas import (
     # AI Suggestions schemas
     AISuggestionsResponse,
     GenerateSuggestionsRequest,
+    # V2 Schemas for SEO Professional Dashboard
+    AISuggestionsResponseV2,
+    StrategicSummary,
+    QuickWin,
+    ContentOpportunity,
+    CompetitorGap,
+    TechnicalCheck,
+    OutreachTarget,
+    # Split API Section Schemas
+    StrategicSummarySection,
+    QuickWinsSection,
+    ContentOpportunitiesSection,
+    CompetitorGapsSection,
+    TechnicalChecklistSection,
+    OutreachTargetsSection,
+    # LLM Output Wrappers
+    QuickWinsList,
+    ContentOpportunitiesList,
+    CompetitorGapsList,
+    TechnicalChecksList,
+    OutreachTargetsList,
 )
 
 app = FastAPI(title="AiSEO API", version="1.0.0")
@@ -1365,6 +1386,126 @@ async def generate_ai_suggestions(
         )
 
 
+@app.post("/api/suggestions/generate/v2")
+async def generate_ai_suggestions_v2(
+    request: GenerateSuggestionsRequest = None,
+    brand_id: str = "wix",
+    force_refresh: bool = False,
+    session: Session = Depends(get_session)
+):
+    """
+    Generate V2 AI-powered SEO suggestions for professional dashboard.
+
+    Enhanced version with:
+    - Strategic summary with headline and key insights
+    - Quick wins (immediate actions)
+    - Content opportunities with target queries
+    - Competitor gaps with evidence
+    - Technical GEO checklist
+    - Outreach targets
+
+    No percentages - focuses on actionable recommendations.
+    """
+    import json
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # Handle request body if provided
+    if request:
+        brand_id = request.brand_id
+        force_refresh = request.force_refresh
+
+    # 1. Check cache first (unless force_refresh)
+    if not force_refresh:
+        cached = session.exec(
+            select(CachedSuggestion)
+            .where(CachedSuggestion.brand_id == brand_id)
+            .where(CachedSuggestion.expires_at > datetime.utcnow())
+            .where(CachedSuggestion.model_used.contains("v2"))  # V2 cache only
+            .order_by(CachedSuggestion.generated_at.desc())
+        ).first()
+
+        if cached:
+            logger.info(f"Returning cached V2 suggestions for brand {brand_id}")
+            return json.loads(cached.suggestions_json)
+
+    # 2. Get the brand
+    brand = session.get(Brand, brand_id)
+    if not brand:
+        raise HTTPException(status_code=404, detail=f"Brand {brand_id} not found")
+
+    # 3. Try to use AI services
+    try:
+        from services import EmbeddingService, LLMClient, RAGService
+        from services.llm_client import LLMRateLimitError
+
+        # Initialize services
+        embedding_service = EmbeddingService()
+        llm_client = LLMClient()
+        rag_service = RAGService(session, embedding_service)
+
+        # Check if LLM is available
+        if not llm_client.is_available():
+            logger.error("No LLM provider available - check API keys")
+            raise HTTPException(
+                status_code=503,
+                detail="AI service unavailable. Please configure ANTHROPIC_API_KEY or OPENAI_API_KEY."
+            )
+
+        # 4. Calculate brand metrics (V2 with extra data)
+        metrics = rag_service.calculate_brand_metrics_v2(brand_id)
+
+        # 5. Find similar prompts using RAG
+        similar_prompts = await rag_service.find_similar_prompts(
+            query=f"SEO for {brand.name} ecommerce platform visibility",
+            brand_id=brand_id,
+            limit=20
+        )
+
+        # 6. Build V2 context for LLM
+        brand_context = rag_service.build_brand_context_v2(brand, metrics)
+        analysis_context = rag_service.build_analysis_context_v2(brand, similar_prompts, metrics)
+
+        # 7. Generate V2 suggestions with LLM
+        suggestions = await llm_client.generate_structured_output_v2(
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            output_schema=AISuggestionsResponseV2
+        )
+
+        # 8. Cache the result with V2 marker
+        cache_hours = int(os.getenv("SUGGESTIONS_CACHE_HOURS", "24"))
+        cached_suggestion = CachedSuggestion(
+            brand_id=brand_id,
+            suggestions_json=suggestions.model_dump_json(),
+            generated_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(hours=cache_hours),
+            model_used=f"{suggestions.model_used}-v2"
+        )
+        session.add(cached_suggestion)
+        session.commit()
+
+        logger.info(f"Generated and cached V2 AI suggestions for brand {brand_id}")
+        return suggestions
+
+    except ImportError as e:
+        logger.error(f"AI services not available: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service dependencies not installed: {e}"
+        )
+    except LLMRateLimitError as e:
+        logger.error(f"LLM rate limit error: {e}")
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable - rate limit exceeded")
+    except Exception as e:
+        logger.error(f"Error generating V2 AI suggestions: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI generation failed: {str(e)}"
+        )
+
+
 def _get_fallback_suggestions(session: Session, brand: Brand) -> dict:
     """
     Return fallback suggestions when AI is unavailable.
@@ -1594,3 +1735,342 @@ def get_suggestions_status(session: Session = Depends(get_session)):
             "embedding_coverage": f"{(embedding_count / prompt_count * 100):.1f}%" if prompt_count > 0 else "0%"
         }
     }
+
+
+# ============================================================================
+# GEO Strategy Split API - One endpoint per widget section
+# ============================================================================
+
+async def _get_geo_context(session: Session, brand_id: str):
+    """Helper to get brand and build context for GEO endpoints."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand = session.get(Brand, brand_id)
+    if not brand:
+        raise HTTPException(status_code=404, detail=f"Brand {brand_id} not found")
+
+    try:
+        from services import EmbeddingService, LLMClient, RAGService
+        from services.llm_client import LLMRateLimitError
+
+        embedding_service = EmbeddingService()
+        llm_client = LLMClient()
+        rag_service = RAGService(session, embedding_service)
+
+        if not llm_client.is_available():
+            raise HTTPException(
+                status_code=503,
+                detail="AI service unavailable. Please configure ANTHROPIC_API_KEY."
+            )
+
+        metrics = rag_service.calculate_brand_metrics_v2(brand_id)
+        similar_prompts = await rag_service.find_similar_prompts(
+            query=f"SEO for {brand.name} ecommerce platform",
+            brand_id=brand_id,
+            limit=15
+        )
+
+        brand_context = rag_service.build_brand_context_v2(brand, metrics)
+        analysis_context = rag_service.build_analysis_context_v2(brand, similar_prompts, metrics)
+
+        return brand, llm_client, brand_context, analysis_context, LLMRateLimitError
+
+    except ImportError as e:
+        logger.error(f"AI services not available: {e}")
+        raise HTTPException(status_code=503, detail=f"AI service dependencies not installed: {e}")
+
+
+@app.post("/api/geo/strategic-summary", response_model=StrategicSummarySection)
+async def generate_strategic_summary(
+    brand_id: str = "wix",
+    session: Session = Depends(get_session)
+):
+    """Generate strategic summary section."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    section_prompt = """Generate a strategic summary with:
+- headline: One-line summary of current state (e.g., 'Strong in informational, weak in commercial queries')
+- key_insight: The single most important insight from the data
+- biggest_opportunity: Highest-impact opportunity with specifics
+- biggest_threat: Most urgent competitive threat
+- recommended_focus: What to focus on in the next 30 days
+
+Be SPECIFIC. Reference actual queries, competitors, and numbers from the data."""
+
+    try:
+        data = await llm_client.generate_section(
+            section_name="strategic_summary",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=StrategicSummary
+        )
+
+        return StrategicSummarySection(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            data=data
+        )
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating strategic summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/geo/quick-wins", response_model=QuickWinsSection)
+async def generate_quick_wins(
+    brand_id: str = "wix",
+    session: Session = Depends(get_session)
+):
+    """Generate quick wins section."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    section_prompt = """Generate exactly 3 quick wins - actions completable in 1-8 hours.
+
+Each quick win must have:
+- action: Specific task (e.g., 'Add FAQ schema to wix.com/pricing')
+- target_page: Exact URL or null for site-wide
+- effort_hours: 0.5-8 hours realistic estimate
+- expected_outcome: What will improve
+- steps: List of implementation steps
+
+Focus on:
+1. Schema markup additions (FAQ, HowTo)
+2. Content optimizations for missing queries
+3. llms.txt implementation
+4. Answer-first content reformatting
+
+Reference actual queries where the brand is absent.
+
+Return JSON with an "items" array containing the quick wins."""
+
+    try:
+        result = await llm_client.generate_section(
+            section_name="quick_wins",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=QuickWinsList
+        )
+
+        return QuickWinsSection(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            data=result.items
+        )
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating quick wins: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/geo/content-opportunities", response_model=ContentOpportunitiesSection)
+async def generate_content_opportunities(
+    brand_id: str = "wix",
+    session: Session = Depends(get_session)
+):
+    """Generate content opportunities section."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    section_prompt = """Generate exactly 4 content opportunities ranked by impact.
+
+Each opportunity must have:
+- topic: Content topic (e.g., 'Wix vs Shopify for small business')
+- action_type: 'create', 'optimize', or 'expand'
+- target_queries: List of specific queries this content should capture
+- competitor_gap: How competitors are winning this topic (or null)
+- content_brief: 2-3 sentence description of what to cover
+- effort_days: 0.5-30 days realistic estimate
+- impact: 'low', 'medium', 'high', or 'critical'
+
+Prioritize queries where the brand is ABSENT but competitors appear.
+Reference actual competitor positions and citations.
+
+Return JSON with an "items" array containing the opportunities."""
+
+    try:
+        result = await llm_client.generate_section(
+            section_name="content_opportunities",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=ContentOpportunitiesList
+        )
+
+        return ContentOpportunitiesSection(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            data=result.items
+        )
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating content opportunities: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/geo/competitor-gaps", response_model=CompetitorGapsSection)
+async def generate_competitor_gaps(
+    brand_id: str = "wix",
+    session: Session = Depends(get_session)
+):
+    """Generate competitor gaps section."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    section_prompt = """Generate exactly 3 competitor gaps - areas where competitors outperform.
+
+Each gap must have:
+- competitor: Name (e.g., 'Shopify', 'WooCommerce')
+- gap_type: 'content', 'authority', 'technical', or 'sentiment'
+- description: Detailed description of the gap
+- action_to_close: Specific action to close this gap
+- urgency: 'immediate', 'this-quarter', or 'long-term'
+- evidence: List of data points supporting this gap
+
+Reference actual citation counts, positions, and queries from the data.
+
+Return JSON with an "items" array containing the gaps."""
+
+    try:
+        result = await llm_client.generate_section(
+            section_name="competitor_gaps",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=CompetitorGapsList
+        )
+
+        return CompetitorGapsSection(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            data=result.items
+        )
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating competitor gaps: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/geo/technical-checklist", response_model=TechnicalChecklistSection)
+async def generate_technical_checklist(
+    brand_id: str = "wix",
+    session: Session = Depends(get_session)
+):
+    """Generate technical GEO checklist section."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    section_prompt = """Generate exactly 5 technical GEO optimization checks.
+
+Each check must have:
+- check: Name (e.g., 'llms.txt file implemented', 'FAQ schema on pricing page')
+- status: 'done', 'missing', or 'needs-improvement' (infer from data)
+- priority: 'critical', 'important', or 'nice-to-have'
+- how_to_fix: Specific implementation guidance
+- effort: Time estimate (e.g., '30 minutes', '2 hours')
+
+Include checks for:
+1. llms.txt implementation
+2. Schema markup (FAQ, HowTo, Product, Organization)
+3. Answer-first content structure
+4. Meta descriptions optimized for AI
+5. Canonical URLs and site structure
+6. Page speed for AI crawlers
+7. Structured data validation
+
+Return JSON with an "items" array containing the checks."""
+
+    try:
+        result = await llm_client.generate_section(
+            section_name="technical_checklist",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=TechnicalChecksList
+        )
+
+        return TechnicalChecklistSection(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            data=result.items
+        )
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating technical checklist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/geo/outreach-targets", response_model=OutreachTargetsSection)
+async def generate_outreach_targets(
+    brand_id: str = "wix",
+    session: Session = Depends(get_session)
+):
+    """Generate outreach targets section."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    section_prompt = """Generate exactly 4 outreach targets - publications and communities to pursue.
+
+Each target must have:
+- name: Name (e.g., 'r/ecommerce', 'Forbes', 'eCommerce Fuel podcast')
+- type: 'publication', 'blog', 'podcast', 'community', or 'review-site'
+- why: Why this target matters for AI visibility
+- action: Specific action to take
+
+Focus on:
+1. Sources that AI systems actually cite (from the data)
+2. Reddit communities relevant to the brand's audience
+3. Industry publications and blogs
+4. Review sites where the brand should have presence
+5. Podcasts and media opportunities
+
+Reference actual domains from the citation data.
+
+Return JSON with an "items" array containing the targets."""
+
+    try:
+        result = await llm_client.generate_section(
+            section_name="outreach_targets",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=OutreachTargetsList
+        )
+
+        return OutreachTargetsSection(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            data=result.items
+        )
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating outreach targets: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

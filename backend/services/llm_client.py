@@ -312,3 +312,315 @@ Return ONLY valid JSON."""
         delay = BASE_DELAY * (2 ** (attempt - 1))
         jitter = 0.7 + 0.6 * random.random()
         return delay * jitter
+
+    # --- V2 Methods for Enhanced SEO Professional Dashboard ---
+
+    async def generate_structured_output_v2(
+        self,
+        analysis_context: str,
+        brand_context: str,
+        output_schema: Type[T],
+        provider: Optional[str] = None
+    ) -> T:
+        """
+        Generate V2 structured output (larger response, more detailed).
+
+        Uses increased max_tokens for comprehensive recommendations.
+        """
+        provider = provider or self.primary_provider
+        providers_to_try = [provider]
+
+        if provider == "anthropic" and self.openai_client:
+            providers_to_try.append("openai")
+        elif provider == "openai" and self.anthropic_client:
+            providers_to_try.append("anthropic")
+
+        last_error = None
+        for current_provider in providers_to_try:
+            try:
+                if current_provider == "anthropic" and self.anthropic_client:
+                    return await self._call_claude_v2_with_retry(
+                        analysis_context, brand_context, output_schema
+                    )
+                elif current_provider == "openai" and self.openai_client:
+                    return await self._call_openai_v2_with_retry(
+                        analysis_context, brand_context, output_schema
+                    )
+            except LLMRateLimitError as e:
+                logger.warning(f"{current_provider} failed: {e}, trying fallback...")
+                last_error = e
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error with {current_provider}: {e}")
+                last_error = e
+                continue
+
+        raise LLMRateLimitError(f"All providers failed. Last error: {last_error}")
+
+    async def _call_claude_v2_with_retry(
+        self,
+        analysis_context: str,
+        brand_context: str,
+        schema: Type[T]
+    ) -> T:
+        """Call Claude V2 with retry logic"""
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                return await self._call_claude_v2(analysis_context, brand_context, schema)
+            except anthropic.RateLimitError as e:
+                if attempt == MAX_RETRIES:
+                    raise LLMRateLimitError(f"Claude rate limit exceeded: {e}")
+                delay = self._calculate_delay(attempt)
+                logger.warning(f"Claude rate limited, retry {attempt}/{MAX_RETRIES} in {delay:.1f}s")
+                await asyncio.sleep(delay)
+            except anthropic.APIConnectionError as e:
+                if attempt == MAX_RETRIES:
+                    raise LLMRateLimitError(f"Claude connection error: {e}")
+                delay = self._calculate_delay(attempt)
+                await asyncio.sleep(delay)
+
+    async def _call_openai_v2_with_retry(
+        self,
+        analysis_context: str,
+        brand_context: str,
+        schema: Type[T]
+    ) -> T:
+        """Call OpenAI V2 with retry logic"""
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                return await self._call_openai_v2(analysis_context, brand_context, schema)
+            except Exception as e:
+                if "rate" in str(e).lower() or "429" in str(e):
+                    if attempt == MAX_RETRIES:
+                        raise LLMRateLimitError(f"OpenAI rate limit exceeded: {e}")
+                    delay = self._calculate_delay(attempt)
+                    logger.warning(f"OpenAI rate limited, retry {attempt}/{MAX_RETRIES} in {delay:.1f}s")
+                    await asyncio.sleep(delay)
+                else:
+                    raise
+
+    async def _call_claude_v2(
+        self,
+        analysis_context: str,
+        brand_context: str,
+        schema: Type[T]
+    ) -> T:
+        """
+        Call Claude for V2 (enhanced SEO professional dashboard).
+
+        Uses larger max_tokens and improved prompt structure.
+        """
+        schema_json = json.dumps(schema.model_json_schema(), indent=2)
+
+        # Enhanced system prompt for V2
+        system_content = [
+            {
+                "type": "text",
+                "text": brand_context,
+                "cache_control": {"type": "ephemeral"}
+            },
+            {
+                "type": "text",
+                "text": """You are an expert GEO (Generative Engine Optimization) strategist.
+
+Your task is to provide ACTIONABLE recommendations for SEO professionals.
+
+CRITICAL REQUIREMENTS:
+1. NO generic advice - every recommendation must reference actual data
+2. NO percentage stats - focus on specific actions
+3. Include exact URLs, queries, and implementation steps where possible
+4. Prioritize by impact and effort
+5. Be specific about competitors and gaps"""
+            }
+        ]
+
+        user_content = f"""Generate a comprehensive GEO strategy based on this data.
+
+Return your response as valid JSON matching this schema:
+{schema_json}
+
+Analysis Data:
+{analysis_context}
+
+Requirements:
+- strategic_summary: Be specific about current state and opportunities
+- quick_wins: 3-5 actions, each with effort_hours (0.5-8) and specific steps
+- content_opportunities: 5-10 topics with target_queries and content_brief
+- competitor_gaps: 3-6 gaps with evidence and urgency classification
+- technical_checklist: 5-10 checks with status and how_to_fix
+- outreach_targets: 5-10 targets with specific actions
+- Set generated_at to current UTC: {datetime.utcnow().isoformat()}Z
+- Set model_used to "{CLAUDE_MODEL}"
+
+Return ONLY valid JSON, no markdown or explanation."""
+
+        response = self.anthropic_client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=12000,  # Large response for comprehensive V2 recommendations
+            system=system_content,
+            messages=[{"role": "user", "content": user_content}]
+        )
+
+        raw_text = response.content[0].text
+
+        # Clean markdown code blocks
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+            raw_text = raw_text.strip()
+
+        try:
+            return schema.model_validate_json(raw_text)
+        except ValidationError as e:
+            logger.error(f"Claude V2 response validation failed: {e}")
+            logger.error(f"Raw response (first 2000 chars): {raw_text[:2000]}")
+            raise
+
+    async def _call_openai_v2(
+        self,
+        analysis_context: str,
+        brand_context: str,
+        schema: Type[T]
+    ) -> T:
+        """Call OpenAI for V2 (enhanced SEO professional dashboard)"""
+        schema_json = json.dumps(schema.model_json_schema(), indent=2)
+
+        system_message = f"""{brand_context}
+
+You are an expert GEO strategist providing ACTIONABLE recommendations.
+
+CRITICAL: NO generic advice. Every recommendation must reference actual data.
+NO percentage stats. Focus on specific actions with steps.
+
+Your response must be valid JSON matching this schema:
+{schema_json}"""
+
+        user_message = f"""Generate a comprehensive GEO strategy:
+
+{analysis_context}
+
+Requirements:
+- quick_wins: 3-5 actions with effort_hours and steps
+- content_opportunities: 5-10 topics with target_queries
+- competitor_gaps: 3-6 gaps with evidence
+- technical_checklist: 5-10 checks with status
+- outreach_targets: 5-10 targets with actions
+- generated_at: "{datetime.utcnow().isoformat()}Z"
+- model_used: "{OPENAI_MODEL}"
+
+Return ONLY valid JSON."""
+
+        response = self.openai_client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7,
+            max_tokens=6000  # Increased for V2
+        )
+
+        raw_text = response.choices[0].message.content
+
+        try:
+            return schema.model_validate_json(raw_text)
+        except ValidationError as e:
+            logger.error(f"OpenAI V2 response validation failed: {e}")
+            logger.debug(f"Raw response: {raw_text[:1000]}...")
+            raise
+
+    # --- Section-Specific Generation Methods ---
+
+    async def generate_section(
+        self,
+        section_name: str,
+        section_prompt: str,
+        analysis_context: str,
+        brand_context: str,
+        schema: Type[T]
+    ) -> T:
+        """
+        Generate a single section of the GEO strategy.
+
+        Args:
+            section_name: Name of the section (for logging)
+            section_prompt: Section-specific prompt requirements
+            analysis_context: Brand analysis data
+            brand_context: Static brand context (cached)
+            schema: Pydantic model for the section
+        """
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                return await self._call_claude_section(
+                    section_name, section_prompt, analysis_context, brand_context, schema
+                )
+            except anthropic.RateLimitError as e:
+                if attempt == MAX_RETRIES:
+                    raise LLMRateLimitError(f"Claude rate limit for {section_name}: {e}")
+                delay = self._calculate_delay(attempt)
+                logger.warning(f"Claude rate limited on {section_name}, retry {attempt}/{MAX_RETRIES}")
+                await asyncio.sleep(delay)
+            except Exception as e:
+                logger.error(f"Error generating {section_name}: {e}")
+                raise
+
+    async def _call_claude_section(
+        self,
+        section_name: str,
+        section_prompt: str,
+        analysis_context: str,
+        brand_context: str,
+        schema: Type[T]
+    ) -> T:
+        """Call Claude for a single section with focused prompt."""
+        schema_json = json.dumps(schema.model_json_schema(), indent=2)
+
+        system_content = [
+            {
+                "type": "text",
+                "text": brand_context,
+                "cache_control": {"type": "ephemeral"}
+            },
+            {
+                "type": "text",
+                "text": """You are an expert GEO strategist. Provide SPECIFIC, ACTIONABLE recommendations.
+NO generic advice. Every recommendation must reference actual data from the analysis."""
+            }
+        ]
+
+        user_content = f"""Generate the {section_name} section based on this data.
+
+{section_prompt}
+
+Analysis Data:
+{analysis_context}
+
+Return your response as valid JSON matching this schema:
+{schema_json}
+
+Return ONLY valid JSON, no markdown or explanation."""
+
+        response = self.anthropic_client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=2500,  # Smaller per-section
+            system=system_content,
+            messages=[{"role": "user", "content": user_content}]
+        )
+
+        raw_text = response.content[0].text
+
+        # Clean markdown code blocks
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+            raw_text = raw_text.strip()
+
+        try:
+            return schema.model_validate_json(raw_text)
+        except ValidationError as e:
+            logger.error(f"Claude {section_name} validation failed: {e}")
+            logger.error(f"Raw response: {raw_text[:1500]}")
+            raise

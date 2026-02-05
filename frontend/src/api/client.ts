@@ -342,3 +342,162 @@ export async function syncEmbeddings(limit: number = 100): Promise<{
   }
   return response.json();
 }
+
+// ============================================================================
+// AI Suggestions V2 (Enhanced for SEO Professionals)
+// ============================================================================
+
+export interface StrategicSummaryResponse {
+  headline: string;
+  key_insight: string;
+  biggest_opportunity: string;
+  biggest_threat: string;
+  recommended_focus: string;
+}
+
+export interface QuickWinResponse {
+  action: string;
+  target_page: string | null;
+  effort_hours: number;
+  expected_outcome: string;
+  steps: string[];
+}
+
+export interface ContentOpportunityResponse {
+  topic: string;
+  action_type: 'create' | 'optimize' | 'expand';
+  target_queries: string[];
+  competitor_gap: string | null;
+  content_brief: string;
+  effort_days: number;
+  impact: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface CompetitorGapResponse {
+  competitor: string;
+  gap_type: 'content' | 'authority' | 'technical' | 'sentiment';
+  description: string;
+  action_to_close: string;
+  urgency: 'immediate' | 'this-quarter' | 'long-term';
+  evidence: string[];
+}
+
+export interface TechnicalCheckResponse {
+  check: string;
+  status: 'done' | 'missing' | 'needs-improvement';
+  priority: 'critical' | 'important' | 'nice-to-have';
+  how_to_fix: string;
+  effort: string;
+}
+
+export interface OutreachTargetResponse {
+  name: string;
+  type: 'publication' | 'blog' | 'podcast' | 'community' | 'review-site';
+  why: string;
+  action: string;
+}
+
+export interface AISuggestionsResponseV2 {
+  brand: string;
+  generated_at: string;
+  model_used: string;
+  strategic_summary: StrategicSummaryResponse;
+  quick_wins: QuickWinResponse[];
+  content_opportunities: ContentOpportunityResponse[];
+  competitor_gaps: CompetitorGapResponse[];
+  technical_checklist: TechnicalCheckResponse[];
+  outreach_targets: OutreachTargetResponse[];
+}
+
+export async function generateAISuggestionsV2(
+  brandId: string = 'wix',
+  forceRefresh: boolean = false
+): Promise<AISuggestionsResponseV2> {
+  const response = await fetch(`${API_BASE}/suggestions/generate/v2`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      brand_id: brandId,
+      force_refresh: forceRefresh,
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API error: ${response.status}` }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+  return response.json();
+}
+
+// ============================================================================
+// GEO Strategy Split API - One endpoint per widget section
+// ============================================================================
+
+interface GeoSectionBase {
+  brand: string;
+  generated_at: string;
+  model_used: string;
+}
+
+export interface StrategicSummarySectionResponse extends GeoSectionBase {
+  data: StrategicSummaryResponse;
+}
+
+export interface QuickWinsSectionResponse extends GeoSectionBase {
+  data: QuickWinResponse[];
+}
+
+export interface ContentOpportunitiesSectionResponse extends GeoSectionBase {
+  data: ContentOpportunityResponse[];
+}
+
+export interface CompetitorGapsSectionResponse extends GeoSectionBase {
+  data: CompetitorGapResponse[];
+}
+
+export interface TechnicalChecklistSectionResponse extends GeoSectionBase {
+  data: TechnicalCheckResponse[];
+}
+
+export interface OutreachTargetsSectionResponse extends GeoSectionBase {
+  data: OutreachTargetResponse[];
+}
+
+async function fetchGeoSection<T>(endpoint: string, brandId: string): Promise<T> {
+  const response = await fetch(`${API_BASE}/geo/${endpoint}?brand_id=${brandId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API error: ${response.status}` }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function generateStrategicSummary(brandId: string = 'wix'): Promise<StrategicSummarySectionResponse> {
+  return fetchGeoSection<StrategicSummarySectionResponse>('strategic-summary', brandId);
+}
+
+export async function generateQuickWins(brandId: string = 'wix'): Promise<QuickWinsSectionResponse> {
+  return fetchGeoSection<QuickWinsSectionResponse>('quick-wins', brandId);
+}
+
+export async function generateContentOpportunities(brandId: string = 'wix'): Promise<ContentOpportunitiesSectionResponse> {
+  return fetchGeoSection<ContentOpportunitiesSectionResponse>('content-opportunities', brandId);
+}
+
+export async function generateCompetitorGaps(brandId: string = 'wix'): Promise<CompetitorGapsSectionResponse> {
+  return fetchGeoSection<CompetitorGapsSectionResponse>('competitor-gaps', brandId);
+}
+
+export async function generateTechnicalChecklist(brandId: string = 'wix'): Promise<TechnicalChecklistSectionResponse> {
+  return fetchGeoSection<TechnicalChecklistSectionResponse>('technical-checklist', brandId);
+}
+
+export async function generateOutreachTargets(brandId: string = 'wix'): Promise<OutreachTargetsSectionResponse> {
+  return fetchGeoSection<OutreachTargetsSectionResponse>('outreach-targets', brandId);
+}
