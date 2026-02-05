@@ -1,6 +1,15 @@
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Column, event, DDL
 from typing import Optional
 from datetime import datetime
+
+# Conditional import for pgvector (not available in SQLite)
+try:
+    from pgvector.sqlalchemy import Vector
+    PGVECTOR_AVAILABLE = True
+except ImportError:
+    PGVECTOR_AVAILABLE = False
+    Vector = None
 
 
 class Brand(SQLModel, table=True):
@@ -66,3 +75,32 @@ class PromptSource(SQLModel, table=True):
     # Relationships
     prompt: Prompt = Relationship(back_populates="sources")
     source: Source = Relationship(back_populates="prompt_links")
+
+
+# --- AI Suggestions Models (pgvector required for production) ---
+
+class PromptEmbedding(SQLModel, table=True):
+    """Vector embeddings for prompt response_text (for RAG similarity search)"""
+    id: int | None = Field(default=None, primary_key=True)
+    prompt_id: int = Field(foreign_key="prompt.id", unique=True, index=True)
+    # Note: embedding column is added dynamically if pgvector is available
+    # For SQLite dev, this table won't have the vector column
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class CachedSuggestion(SQLModel, table=True):
+    """Cached AI-generated SEO suggestions"""
+    id: int | None = Field(default=None, primary_key=True)
+    brand_id: str = Field(foreign_key="brand.id", index=True)
+    suggestions_json: str  # JSON blob of AISuggestionsResponse
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime  # Cache expiration (default 24h)
+    model_used: str  # e.g., "claude-sonnet-4.5" or "gpt-5.1"
+
+
+# Dynamically add vector column to PromptEmbedding if pgvector is available
+if PGVECTOR_AVAILABLE and Vector is not None:
+    # Add the embedding column with pgvector type
+    PromptEmbedding.__table__.append_column(
+        Column('embedding', Vector(3072))  # text-embedding-3-large dimension
+    )

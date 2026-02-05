@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file before any other imports
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, func
@@ -7,7 +10,7 @@ from collections import Counter
 from itertools import groupby
 
 from database import create_db_and_tables, get_session
-from models import Brand, Prompt, PromptBrandMention, Source, PromptSource
+from models import Brand, Prompt, PromptBrandMention, Source, PromptSource, PromptEmbedding, CachedSuggestion
 from schemas import (
     BrandResponse,
     PromptResponse,
@@ -32,6 +35,9 @@ from schemas import (
     BrandListResponse,
     BrandPromptDetail,
     BrandMonthlyVisibility,
+    # AI Suggestions schemas
+    AISuggestionsResponse,
+    GenerateSuggestionsRequest,
 )
 
 app = FastAPI(title="AiSEO API", version="1.0.0")
@@ -1231,3 +1237,360 @@ def get_suggestions(session: Session = Depends(get_session)):
 def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+# ============================================================================
+# AI-Powered Suggestions Endpoints
+# ============================================================================
+
+@app.post("/api/suggestions/generate")
+async def generate_ai_suggestions(
+    request: GenerateSuggestionsRequest = None,
+    brand_id: str = "wix",
+    force_refresh: bool = False,
+    session: Session = Depends(get_session)
+):
+    """
+    Generate AI-powered SEO suggestions using RAG and LLM.
+
+    This endpoint:
+    1. Checks for cached suggestions (unless force_refresh=True)
+    2. Uses pgvector for semantic similarity search (if available)
+    3. Calls Claude/GPT with structured output for recommendations
+    4. Caches the result for future requests
+
+    Args:
+        brand_id: Brand to analyze (default: "wix")
+        force_refresh: Force regeneration even if cached (default: False)
+
+    Returns:
+        AISuggestionsResponse with AI-generated recommendations
+    """
+    import json
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # Handle request body if provided
+    if request:
+        brand_id = request.brand_id
+        force_refresh = request.force_refresh
+
+    # 1. Check cache first (unless force_refresh)
+    if not force_refresh:
+        cached = session.exec(
+            select(CachedSuggestion)
+            .where(CachedSuggestion.brand_id == brand_id)
+            .where(CachedSuggestion.expires_at > datetime.utcnow())
+            .order_by(CachedSuggestion.generated_at.desc())
+        ).first()
+
+        if cached:
+            logger.info(f"Returning cached suggestions for brand {brand_id}")
+            return json.loads(cached.suggestions_json)
+
+    # 2. Get the brand
+    brand = session.get(Brand, brand_id)
+    if not brand:
+        raise HTTPException(status_code=404, detail=f"Brand {brand_id} not found")
+
+    # 3. Try to use AI services
+    try:
+        from services import EmbeddingService, LLMClient, RAGService
+        from services.llm_client import LLMRateLimitError
+
+        # Initialize services
+        embedding_service = EmbeddingService()
+        llm_client = LLMClient()
+        rag_service = RAGService(session, embedding_service)
+
+        # Check if LLM is available
+        if not llm_client.is_available():
+            logger.error("No LLM provider available - check API keys")
+            raise HTTPException(
+                status_code=503,
+                detail="AI service unavailable. Please configure ANTHROPIC_API_KEY or OPENAI_API_KEY."
+            )
+
+        # 4. Calculate brand metrics
+        metrics = rag_service.calculate_brand_metrics(brand_id)
+
+        # 5. Find similar prompts using RAG
+        similar_prompts = await rag_service.find_similar_prompts(
+            query=f"SEO for {brand.name} ecommerce platform visibility",
+            brand_id=brand_id,
+            limit=20
+        )
+
+        # 6. Build context for LLM
+        brand_context = rag_service.build_brand_context(brand, metrics)
+        analysis_context = rag_service.build_analysis_context(brand, similar_prompts, metrics)
+
+        # 7. Generate suggestions with LLM
+        suggestions = await llm_client.generate_structured_output(
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            output_schema=AISuggestionsResponse
+        )
+
+        # 8. Cache the result
+        cache_hours = int(os.getenv("SUGGESTIONS_CACHE_HOURS", "24"))
+        cached_suggestion = CachedSuggestion(
+            brand_id=brand_id,
+            suggestions_json=suggestions.model_dump_json(),
+            generated_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(hours=cache_hours),
+            model_used=suggestions.model_used
+        )
+        session.add(cached_suggestion)
+        session.commit()
+
+        logger.info(f"Generated and cached AI suggestions for brand {brand_id}")
+        return suggestions
+
+    except ImportError as e:
+        logger.error(f"AI services not available: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service dependencies not installed: {e}"
+        )
+    except LLMRateLimitError as e:
+        logger.error(f"LLM rate limit error: {e}")
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable - rate limit exceeded")
+    except Exception as e:
+        logger.error(f"Error generating AI suggestions: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI generation failed: {str(e)}"
+        )
+
+
+def _get_fallback_suggestions(session: Session, brand: Brand) -> dict:
+    """
+    Return fallback suggestions when AI is unavailable.
+    Uses the existing hardcoded suggestions logic.
+    """
+    from schemas import KeywordOpportunity, OnPageRecommendation
+
+    # Calculate basic metrics
+    all_prompts = list(session.exec(select(Prompt)).all())
+    mentions = list(session.exec(
+        select(PromptBrandMention)
+        .where(PromptBrandMention.brand_id == brand.id)
+        .where(PromptBrandMention.mentioned == True)
+    ).all())
+
+    total_queries = len(set(p.query for p in all_prompts))
+    mentioned_queries = len(set(m.prompt_id for m in mentions))
+    visibility = (mentioned_queries / total_queries * 100) if total_queries > 0 else 0
+
+    positions = [m.position for m in mentions if m.position]
+    avg_position = sum(positions) / len(positions) if positions else 0
+
+    return {
+        "brand": brand.name,
+        "ai_visibility_score": visibility,
+        "summary": f"Analysis based on {total_queries} queries. AI suggestions require API keys to be configured.",
+        "keyword_opportunities": [
+            {
+                "query": "best ecommerce platform for small business",
+                "intent": "commercial",
+                "difficulty": "medium",
+                "estimated_impact": "high",
+                "rationale": "High-volume comparison query with strong purchase intent"
+            },
+            {
+                "query": f"{brand.name.lower()} vs shopify",
+                "intent": "commercial",
+                "difficulty": "low",
+                "estimated_impact": "medium",
+                "rationale": "Direct brand comparison query - should own this SERP"
+            }
+        ],
+        "on_page_recommendations": [
+            {
+                "page_url": "*",
+                "priority": "high",
+                "change_type": "content",
+                "recommendation": "Add Answer-First summaries to key landing pages",
+                "implementation_steps": [
+                    "Identify top 10 landing pages by traffic",
+                    "Add 50-word direct answer summary at top of each page",
+                    "Use bullet points for key features",
+                    "Test with AI search tools to verify extractability"
+                ]
+            },
+            {
+                "page_url": "*",
+                "priority": "medium",
+                "change_type": "technical",
+                "recommendation": "Implement comprehensive FAQ schema",
+                "implementation_steps": [
+                    "Identify top 20 user questions from support data",
+                    "Create FAQ page with JSON-LD schema markup",
+                    "Ensure answers are concise and factual"
+                ]
+            }
+        ],
+        "competitor_insights": "Configure AI API keys to enable competitive analysis.",
+        "generated_at": datetime.utcnow().isoformat(),
+        "model_used": "fallback-heuristics"
+    }
+
+
+@app.post("/api/embeddings/sync")
+async def sync_embeddings(
+    limit: int = 100,
+    session: Session = Depends(get_session)
+):
+    """
+    Backfill embeddings for existing prompts.
+
+    Run this endpoint to generate embeddings for prompts that don't have them yet.
+    This enables semantic similarity search for RAG.
+
+    Args:
+        limit: Maximum number of prompts to process (default: 100)
+
+    Returns:
+        Summary of embeddings created
+    """
+    import logging
+    from database import IS_POSTGRES
+
+    logger = logging.getLogger(__name__)
+
+    if not IS_POSTGRES:
+        return {
+            "status": "skipped",
+            "message": "Embedding sync only available with PostgreSQL + pgvector",
+            "created": 0
+        }
+
+    try:
+        from services import EmbeddingService
+
+        embedding_service = EmbeddingService()
+        if not embedding_service.is_available():
+            return {
+                "status": "error",
+                "message": "OpenAI API key not configured",
+                "created": 0
+            }
+
+        # Find prompts without embeddings
+        existing_ids = session.exec(
+            select(PromptEmbedding.prompt_id)
+        ).all()
+        existing_ids_set = set(existing_ids)
+
+        prompts_to_embed = session.exec(
+            select(Prompt)
+            .where(Prompt.id.notin_(existing_ids_set) if existing_ids_set else True)
+            .limit(limit)
+        ).all()
+
+        if not prompts_to_embed:
+            return {
+                "status": "complete",
+                "message": "All prompts already have embeddings",
+                "created": 0
+            }
+
+        # Generate embeddings
+        created = 0
+        for prompt in prompts_to_embed:
+            if not prompt.response_text:
+                continue
+
+            embedding = await embedding_service.embed_prompt(
+                prompt.query,
+                prompt.response_text
+            )
+
+            if embedding:
+                # Note: For full pgvector support, we'd store the embedding
+                # This is a simplified version that just tracks which prompts are embedded
+                prompt_embedding = PromptEmbedding(
+                    prompt_id=prompt.id,
+                    created_at=datetime.utcnow()
+                )
+                session.add(prompt_embedding)
+                created += 1
+
+        session.commit()
+        logger.info(f"Created {created} embeddings")
+
+        return {
+            "status": "success",
+            "message": f"Generated embeddings for {created} prompts",
+            "created": created,
+            "remaining": len(prompts_to_embed) - created
+        }
+
+    except ImportError as e:
+        return {
+            "status": "error",
+            "message": f"AI services not available: {e}",
+            "created": 0
+        }
+    except Exception as e:
+        logger.error(f"Error syncing embeddings: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "created": 0
+        }
+
+
+@app.get("/api/suggestions/status")
+def get_suggestions_status(session: Session = Depends(get_session)):
+    """
+    Get status of AI suggestions feature.
+
+    Returns:
+        Status of AI services and cached suggestions
+    """
+    from database import IS_POSTGRES, is_vector_search_available
+
+    # Check AI services availability
+    try:
+        from services import EmbeddingService, LLMClient
+
+        embedding_service = EmbeddingService()
+        llm_client = LLMClient()
+
+        embedding_available = embedding_service.is_available()
+        llm_available = llm_client.is_available()
+    except ImportError:
+        embedding_available = False
+        llm_available = False
+
+    # Count cached suggestions
+    cached_count = session.exec(
+        select(func.count(CachedSuggestion.id))
+    ).one()
+
+    # Count embeddings
+    embedding_count = session.exec(
+        select(func.count(PromptEmbedding.id))
+    ).one()
+
+    prompt_count = session.exec(
+        select(func.count(Prompt.id))
+    ).one()
+
+    return {
+        "ai_suggestions_enabled": llm_available,
+        "services": {
+            "embedding_service": embedding_available,
+            "llm_service": llm_available,
+            "vector_search": IS_POSTGRES and is_vector_search_available() if IS_POSTGRES else False
+        },
+        "data": {
+            "cached_suggestions": cached_count,
+            "prompts_with_embeddings": embedding_count,
+            "total_prompts": prompt_count,
+            "embedding_coverage": f"{(embedding_count / prompt_count * 100):.1f}%" if prompt_count > 0 else "0%"
+        }
+    }

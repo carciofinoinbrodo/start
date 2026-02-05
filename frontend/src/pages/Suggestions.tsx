@@ -1,6 +1,9 @@
-import { Lightbulb, Loader2, FileText, Users, Award, Wrench, Star, Globe, MessageSquare } from 'lucide-react';
+import { useState } from 'react';
+import { Lightbulb, Loader2, FileText, Users, Award, Wrench, Star, Globe, MessageSquare, RefreshCw, Sparkles, ChevronDown, ChevronUp, Clock, Cpu } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { useSuggestions } from '../hooks/useApi';
+import { generateAISuggestions } from '../api/client';
+import type { AISuggestionsResponse } from '../api/client';
 import { config } from '../config';
 
 const PRIORITY_COLORS = {
@@ -25,6 +28,24 @@ function getScoreLabel(score: number): { label: string; color: string } {
 
 export function Suggestions() {
   const { data, loading, error } = useSuggestions();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestionsResponse | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
+
+  const handleGenerateAI = async (forceRefresh: boolean = false) => {
+    setIsGenerating(true);
+    setAiError(null);
+    try {
+      const result = await generateAISuggestions('wix', forceRefresh);
+      setAiSuggestions(result);
+      setShowAiSuggestions(true);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Failed to generate AI suggestions');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -120,13 +141,162 @@ export function Suggestions() {
           </div>
         </div>
 
+        {/* AI Suggestions Section */}
+        <div className="glass-card p-6 mb-8 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="icon-glow">
+                <Sparkles className="w-5 h-5 text-[var(--accent-secondary)]" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[var(--text-primary)]">AI-Powered Analysis</h3>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Get personalized recommendations using advanced AI analysis
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleGenerateAI(true)}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/80 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : aiSuggestions ? (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Regenerate
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Generate AI Suggestions
+                </>
+              )}
+            </button>
+          </div>
+
+          {aiError && (
+            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm mb-4">
+              {aiError}
+            </div>
+          )}
+
+          {aiSuggestions && (
+            <div className="border-t border-[var(--border-subtle)] pt-4">
+              <button
+                onClick={() => setShowAiSuggestions(!showAiSuggestions)}
+                className="flex items-center gap-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] transition-colors w-full"
+              >
+                {showAiSuggestions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                <span className="font-medium">AI Analysis Results</span>
+                <span className="text-xs text-[var(--text-muted)] ml-2">
+                  Score: {aiSuggestions.ai_visibility_score.toFixed(1)}%
+                </span>
+              </button>
+
+              {showAiSuggestions && (
+                <div className="mt-4 space-y-4">
+                  {/* Summary */}
+                  <div className="p-4 rounded-lg bg-[var(--bg-tertiary)]">
+                    <p className="text-[var(--text-secondary)]">{aiSuggestions.summary}</p>
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Generated: {new Date(aiSuggestions.generated_at).toLocaleString()}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Cpu className="w-3 h-3" />
+                      Model: {aiSuggestions.model_used}
+                    </span>
+                  </div>
+
+                  {/* Keyword Opportunities */}
+                  {aiSuggestions.keyword_opportunities.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-[var(--text-primary)] mb-2">
+                        Keyword Opportunities ({aiSuggestions.keyword_opportunities.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {aiSuggestions.keyword_opportunities.map((kw, idx) => (
+                          <div key={idx} className="p-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)]">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="font-medium text-[var(--text-primary)]">"{kw.query}"</span>
+                              <div className="flex gap-1">
+                                <span className={`px-2 py-0.5 rounded text-xs ${
+                                  kw.estimated_impact === 'high' ? 'bg-green-500/20 text-green-400' :
+                                  kw.estimated_impact === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                  'bg-gray-500/20 text-gray-400'
+                                }`}>
+                                  {kw.estimated_impact} impact
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-[var(--text-muted)] mt-1">{kw.rationale}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* On-Page Recommendations */}
+                  {aiSuggestions.on_page_recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-[var(--text-primary)] mb-2">
+                        Action Items ({aiSuggestions.on_page_recommendations.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {aiSuggestions.on_page_recommendations.map((rec, idx) => (
+                          <div key={idx} className="p-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)]">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <span className="font-medium text-[var(--text-primary)]">{rec.recommendation}</span>
+                              <span className={`px-2 py-0.5 rounded text-xs uppercase ${
+                                rec.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                                rec.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-green-500/20 text-green-400'
+                              }`}>
+                                {rec.priority}
+                              </span>
+                            </div>
+                            {rec.implementation_steps.length > 0 && (
+                              <ul className="text-sm text-[var(--text-muted)] space-y-1 ml-4">
+                                {rec.implementation_steps.map((step, stepIdx) => (
+                                  <li key={stepIdx} className="list-disc">{step}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Competitor Insights */}
+                  {aiSuggestions.competitor_insights && (
+                    <div className="p-4 rounded-lg bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30">
+                      <h4 className="text-sm font-medium text-[var(--accent-primary)] mb-1">Competitor Insights</h4>
+                      <p className="text-sm text-[var(--text-secondary)]">{aiSuggestions.competitor_insights}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Suggestions Header */}
         <div className="flex items-center gap-3 mb-6 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
           <div className="icon-glow">
             <Lightbulb className="w-5 h-5 text-[var(--accent-primary)]" />
           </div>
           <h2 className="text-xl font-semibold text-[var(--text-primary)]">
-            Recommendations ({data.suggestions.length})
+            Quick Recommendations ({data.suggestions.length})
           </h2>
         </div>
 

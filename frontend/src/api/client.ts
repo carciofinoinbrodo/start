@@ -256,3 +256,89 @@ export async function deleteBrand(brandId: string): Promise<{ success: boolean; 
   }
   return response.json();
 }
+
+// ============================================================================
+// AI-Powered Suggestions
+// ============================================================================
+
+export interface KeywordOpportunityResponse {
+  query: string;
+  intent: 'informational' | 'commercial' | 'navigational';
+  difficulty: 'low' | 'medium' | 'high';
+  estimated_impact: 'low' | 'medium' | 'high';
+  rationale: string;
+}
+
+export interface OnPageRecommendationResponse {
+  page_url: string;
+  priority: 'low' | 'medium' | 'high';
+  change_type: 'content' | 'technical' | 'authority' | 'sentiment';
+  recommendation: string;
+  implementation_steps: string[];
+}
+
+export interface AISuggestionsResponse {
+  brand: string;
+  ai_visibility_score: number;
+  summary: string;
+  keyword_opportunities: KeywordOpportunityResponse[];
+  on_page_recommendations: OnPageRecommendationResponse[];
+  competitor_insights: string | null;
+  generated_at: string;
+  model_used: string;
+}
+
+export interface SuggestionsStatusResponse {
+  ai_suggestions_enabled: boolean;
+  services: {
+    embedding_service: boolean;
+    llm_service: boolean;
+    vector_search: boolean;
+  };
+  data: {
+    cached_suggestions: number;
+    prompts_with_embeddings: number;
+    total_prompts: number;
+    embedding_coverage: string;
+  };
+}
+
+export async function generateAISuggestions(
+  brandId: string = 'wix',
+  forceRefresh: boolean = false
+): Promise<AISuggestionsResponse> {
+  const response = await fetch(`${API_BASE}/suggestions/generate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      brand_id: brandId,
+      force_refresh: forceRefresh,
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API error: ${response.status}` }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function fetchSuggestionsStatus(): Promise<SuggestionsStatusResponse> {
+  return fetchJson<SuggestionsStatusResponse>('/suggestions/status');
+}
+
+export async function syncEmbeddings(limit: number = 100): Promise<{
+  status: string;
+  message: string;
+  created: number;
+  remaining?: number;
+}> {
+  const response = await fetch(`${API_BASE}/embeddings/sync?limit=${limit}`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+}

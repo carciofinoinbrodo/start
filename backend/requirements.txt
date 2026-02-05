@@ -4,3 +4,8 @@ sqlmodel>=0.0.22
 python-dotenv>=1.0.0
 psycopg[binary]>=3.1.0
 gunicorn>=22.0.0
+
+# AI/LLM dependencies
+anthropic>=0.40.0
+openai>=1.50.0
+pgvector>=0.3.0

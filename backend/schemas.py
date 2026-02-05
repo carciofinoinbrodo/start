@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, Literal
 from datetime import datetime
 
 
@@ -209,3 +209,77 @@ class BrandDetailResponse(BaseModel):
 class BrandListResponse(BaseModel):
     """List of all brands with details"""
     brands: list[BrandDetailResponse]
+
+
+# --- AI-Generated Suggestions Schemas (for LLM structured output) ---
+
+class KeywordOpportunity(BaseModel):
+    """A keyword/topic opportunity identified by AI analysis"""
+    query: str = Field(description="The keyword or topic query")
+    intent: Literal["informational", "commercial", "navigational"] = Field(
+        description="User intent behind this query"
+    )
+    difficulty: Literal["low", "medium", "high"] = Field(
+        description="Estimated difficulty to rank for this query"
+    )
+    estimated_impact: Literal["low", "medium", "high"] = Field(
+        description="Expected impact on AI visibility if optimized"
+    )
+    rationale: str = Field(
+        description="Data-driven explanation for why this opportunity exists"
+    )
+
+
+class OnPageRecommendation(BaseModel):
+    """An actionable SEO/GEO recommendation"""
+    page_url: str = Field(
+        description="Target page URL or '*' for site-wide recommendations"
+    )
+    priority: Literal["low", "medium", "high"] = Field(
+        description="Implementation priority"
+    )
+    change_type: Literal["content", "technical", "authority", "sentiment"] = Field(
+        description="Category of change required"
+    )
+    recommendation: str = Field(
+        description="Clear, specific recommendation"
+    )
+    implementation_steps: list[str] = Field(
+        description="Step-by-step implementation guide"
+    )
+
+
+class AISuggestionsResponse(BaseModel):
+    """
+    Structured output schema for AI-generated SEO suggestions.
+    This schema is passed to Claude/GPT for structured output generation.
+    """
+    brand: str = Field(description="Brand being analyzed")
+    ai_visibility_score: float = Field(
+        ge=0, le=100,
+        description="Overall AI visibility score (0-100)"
+    )
+    summary: str = Field(
+        description="2-3 sentence executive summary of AI visibility status and key findings"
+    )
+    keyword_opportunities: list[KeywordOpportunity] = Field(
+        description="3-7 keyword/topic opportunities for improved AI citations"
+    )
+    on_page_recommendations: list[OnPageRecommendation] = Field(
+        description="3-10 prioritized on-page and off-page action items"
+    )
+    competitor_insights: str | None = Field(
+        default=None,
+        description="Key insights about competitor performance in AI search"
+    )
+    generated_at: datetime = Field(description="When these suggestions were generated")
+    model_used: str = Field(description="LLM model used for generation")
+
+
+class GenerateSuggestionsRequest(BaseModel):
+    """Request body for generating AI suggestions"""
+    brand_id: str = Field(default="wix", description="Brand ID to analyze")
+    force_refresh: bool = Field(
+        default=False,
+        description="Force regeneration even if cached suggestions exist"
+    )
