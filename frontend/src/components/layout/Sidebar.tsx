@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router';
-import { LayoutDashboard, MessageSquareText, Globe, Tag, Lightbulb, Settings, X, ChevronLeft, ChevronRight, Plus, Sparkles, HelpCircle } from 'lucide-react';
+import { NavLink } from 'react-router';
+import { LayoutDashboard, MessageSquareText, Globe, Tag, Lightbulb, Settings, X, ChevronLeft, ChevronRight, Sparkles, HelpCircle } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -25,7 +25,6 @@ export function Sidebar({
   onToggleCollapse
 }: SidebarProps) {
   const isOverlay = variant === 'overlay';
-  const navigate = useNavigate();
 
   // For overlay mode on mobile, completely hide when not open
   if (isOverlay && !isOpen) {
@@ -39,21 +38,16 @@ export function Sidebar({
     !isOverlay && !isCollapsed && 'animate-slide-in-left',
   ].filter(Boolean).join(' ');
 
-  const handleNewPrompt = () => {
-    navigate('/prompts');
-    // Could trigger a modal or action here
-  };
-
   return (
     <aside className={sidebarClasses}>
       {/* Logo Section */}
       <div className={`p-4 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         <NavLink to="/" className={`flex items-center ${isCollapsed ? '' : 'gap-2.5'}`}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span className="text-white font-semibold text-sm">A</span>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <span className="text-white font-semibold text-sm">V</span>
           </div>
           {!isCollapsed && (
-            <span className="font-semibold text-[var(--text-primary)] text-[15px]">AiSEO</span>
+            <span className="font-semibold text-[var(--text-primary)] text-[15px]">Visyble</span>
           )}
         </NavLink>
 
@@ -79,19 +73,6 @@ export function Sidebar({
           </button>
         )}
       </div>
-
-      {/* New Prompt Button - Campsite style */}
-      {!isCollapsed && (
-        <div className="px-3 mb-3">
-          <button
-            onClick={handleNewPrompt}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-hover)] border border-[var(--border-visible)] rounded-lg hover:bg-[var(--bg-active)] hover:border-[var(--border-strong)] transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New prompt</span>
-          </button>
-        </div>
-      )}
 
       {/* Expand button when collapsed */}
       {!isOverlay && onToggleCollapse && isCollapsed && (
@@ -127,16 +108,16 @@ export function Sidebar({
         </ul>
       </nav>
 
-      {/* Feature Card - Campsite style */}
+      {/* Feature Card - Campsite style with hover effect */}
       {!isCollapsed && (
         <div className="px-3 pb-3">
-          <div className="p-3 rounded-lg bg-[var(--accent-glow)] border border-[var(--border-accent)]">
+          <div className="p-3 rounded-xl bg-[var(--accent-glow)] border border-[var(--border-accent)] hover:border-[var(--accent-primary)]/30 transition-all cursor-default group">
             <div className="flex items-start gap-2.5">
-              <div className="p-1.5 rounded-md bg-[var(--accent-primary)]/10">
+              <div className="p-1.5 rounded-lg bg-[var(--accent-primary)]/10 group-hover:bg-[var(--accent-primary)]/15 transition-colors">
                 <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-[var(--accent-primary)]">Pro tip</p>
+                <p className="text-xs font-semibold text-[var(--accent-primary)]">Pro tip</p>
                 <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
                   Add more prompts to improve your AI visibility tracking.
                 </p>

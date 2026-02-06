@@ -13,12 +13,12 @@ export function StrategicSummaryCard({ summary }: StrategicSummaryCardProps) {
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--bg-hover)]">
-          <div className="p-2 rounded-lg bg-blue-100">
-            <Lightbulb className="w-4 h-4 text-blue-600" />
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--pastel-indigo)]">
+          <div className="p-2 rounded-lg bg-[var(--pastel-indigo-accent)]">
+            <Lightbulb className="w-4 h-4 text-[var(--pastel-indigo-text)]" />
           </div>
           <div>
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--pastel-indigo-text)] uppercase tracking-wide">
               Key Insight
             </span>
             <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -27,12 +27,12 @@ export function StrategicSummaryCard({ summary }: StrategicSummaryCardProps) {
           </div>
         </div>
 
-        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--bg-hover)]">
-          <div className="p-2 rounded-lg bg-green-100">
-            <Target className="w-4 h-4 text-green-600" />
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--pastel-emerald)]">
+          <div className="p-2 rounded-lg bg-[var(--pastel-emerald-accent)]">
+            <Target className="w-4 h-4 text-[var(--pastel-emerald-text)]" />
           </div>
           <div>
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--pastel-emerald-text)] uppercase tracking-wide">
               Biggest Opportunity
             </span>
             <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -41,12 +41,12 @@ export function StrategicSummaryCard({ summary }: StrategicSummaryCardProps) {
           </div>
         </div>
 
-        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--bg-hover)]">
-          <div className="p-2 rounded-lg bg-red-100">
-            <AlertTriangle className="w-4 h-4 text-red-600" />
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--pastel-rose)]">
+          <div className="p-2 rounded-lg bg-[var(--pastel-rose-accent)]">
+            <AlertTriangle className="w-4 h-4 text-[var(--pastel-rose-text)]" />
           </div>
           <div>
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--pastel-rose-text)] uppercase tracking-wide">
               Biggest Threat
             </span>
             <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -55,12 +55,12 @@ export function StrategicSummaryCard({ summary }: StrategicSummaryCardProps) {
           </div>
         </div>
 
-        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--bg-hover)]">
-          <div className="p-2 rounded-lg bg-purple-100">
-            <Compass className="w-4 h-4 text-purple-600" />
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--pastel-violet)]">
+          <div className="p-2 rounded-lg bg-[var(--pastel-violet-accent)]">
+            <Compass className="w-4 h-4 text-[var(--pastel-violet-text)]" />
           </div>
           <div>
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--pastel-violet-text)] uppercase tracking-wide">
               30-Day Focus
             </span>
             <p className="text-sm text-[var(--text-secondary)] mt-1">

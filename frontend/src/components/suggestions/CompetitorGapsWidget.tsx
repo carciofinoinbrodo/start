@@ -8,33 +8,33 @@ interface CompetitorGapsWidgetProps {
 
 const URGENCY_CONFIG = {
   immediate: {
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
+    color: 'text-[var(--pastel-rose-text)]',
+    bg: 'bg-[var(--pastel-rose)]',
+    border: 'border-[var(--pastel-rose-accent)]',
     icon: AlertCircle,
     label: 'Immediate'
   },
   'this-quarter': {
-    color: 'text-yellow-700',
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
+    color: 'text-[var(--pastel-amber-text)]',
+    bg: 'bg-[var(--pastel-amber)]',
+    border: 'border-[var(--pastel-amber-accent)]',
     icon: Clock,
     label: 'This Quarter'
   },
   'long-term': {
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
+    color: 'text-[var(--pastel-indigo-text)]',
+    bg: 'bg-[var(--pastel-indigo)]',
+    border: 'border-[var(--pastel-indigo-accent)]',
     icon: Calendar,
     label: 'Long-term'
   },
 };
 
 const GAP_TYPE_COLORS = {
-  content: 'bg-purple-100 text-purple-700',
-  authority: 'bg-blue-100 text-blue-700',
-  technical: 'bg-green-100 text-green-700',
-  sentiment: 'bg-orange-100 text-orange-700',
+  content: 'bg-[var(--pastel-violet)] text-[var(--pastel-violet-text)]',
+  authority: 'bg-[var(--pastel-indigo)] text-[var(--pastel-indigo-text)]',
+  technical: 'bg-[var(--pastel-emerald)] text-[var(--pastel-emerald-text)]',
+  sentiment: 'bg-[var(--orange-bg)] text-[var(--orange-accent)]',
 };
 
 function GapCard({ gap }: { gap: CompetitorGapResponse }) {
@@ -115,8 +115,8 @@ export function CompetitorGapsWidget({ gaps }: CompetitorGapsWidgetProps) {
   return (
     <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-red-100">
-          <Users className="w-5 h-5 text-red-600" />
+        <div className="p-2 rounded-lg bg-[var(--pastel-rose)]">
+          <Users className="w-5 h-5 text-[var(--pastel-rose-text)]" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Competitor Gaps</h3>

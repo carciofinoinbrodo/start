@@ -58,6 +58,19 @@ backend/backups/*.backup
 # Playwright MCP screenshots
 .playwright-mcp/
 
+# Test screenshots from Playwright
+test-results/
+playwright-report/
+**/test-results/
+**/tests/screenshots/
+
+# Temporary debug screenshots
+frontend/*.png
+
+# Claude Code
+.claude/
+**/.claude/
+
 # OS
 .DS_Store
 Thumbs.db

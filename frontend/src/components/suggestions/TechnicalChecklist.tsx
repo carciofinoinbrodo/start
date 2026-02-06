@@ -9,31 +9,31 @@ interface TechnicalChecklistProps {
 const STATUS_CONFIG = {
   done: {
     icon: CheckCircle,
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-    border: 'border-green-200',
+    color: 'text-[var(--pastel-emerald-text)]',
+    bg: 'bg-[var(--pastel-emerald)]',
+    border: 'border-[var(--pastel-emerald-accent)]',
     label: 'Done',
   },
   missing: {
     icon: XCircle,
-    color: 'text-red-600',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
+    color: 'text-[var(--pastel-rose-text)]',
+    bg: 'bg-[var(--pastel-rose)]',
+    border: 'border-[var(--pastel-rose-accent)]',
     label: 'Missing',
   },
   'needs-improvement': {
     icon: AlertTriangle,
-    color: 'text-yellow-600',
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
+    color: 'text-[var(--pastel-amber-text)]',
+    bg: 'bg-[var(--pastel-amber)]',
+    border: 'border-[var(--pastel-amber-accent)]',
     label: 'Needs Work',
   },
 };
 
 const PRIORITY_COLORS = {
-  critical: 'text-red-600',
-  important: 'text-yellow-600',
-  'nice-to-have': 'text-blue-600',
+  critical: 'text-[var(--pastel-rose-text)]',
+  important: 'text-[var(--pastel-amber-text)]',
+  'nice-to-have': 'text-[var(--pastel-indigo-text)]',
 };
 
 function CheckItem({ check }: { check: TechnicalCheckResponse }) {
@@ -106,8 +106,8 @@ export function TechnicalChecklist({ checks }: TechnicalChecklistProps) {
     <div className="card p-6 h-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-100">
-            <Wrench className="w-5 h-5 text-purple-600" />
+          <div className="p-2 rounded-lg bg-[var(--pastel-slate)]">
+            <Wrench className="w-5 h-5 text-[var(--pastel-slate-text)]" />
           </div>
           <div>
             <h3 className="font-semibold text-[var(--text-primary)]">Technical GEO Checklist</h3>
@@ -129,7 +129,7 @@ export function TechnicalChecklist({ checks }: TechnicalChecklistProps) {
 
       <div className="w-full h-2 bg-[var(--bg-hover)] rounded-full mb-4 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+          className="h-full bg-gradient-to-r from-[#059669] to-[#34D399] rounded-full transition-all duration-500"
           style={{ width: `${percentage}%` }}
         />
       </div>

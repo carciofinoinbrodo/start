@@ -590,8 +590,8 @@ export function Prompts() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [sortKey, setSortKey] = useState<SortKey | null>('visibility');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedAISource, setSelectedAISource] = useState<AISource>('ai-overview');
   const [showHelpDialog, setShowHelpDialog] = useState(false);
 
@@ -780,7 +780,7 @@ export function Prompts() {
 
         {/* Desktop Table */}
         {!isLoading && !promptsError && (
-          <div className="hidden md:block card overflow-hidden animate-fade-in-up delay-150 relative z-[10]">
+          <div className="hidden md:block card-elevated overflow-hidden animate-fade-in-up delay-150 relative z-[10]">
             <div className="overflow-x-auto">
               <table className="table-dark">
                 <thead>

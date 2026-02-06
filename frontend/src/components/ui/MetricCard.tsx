@@ -119,7 +119,7 @@ export function MetricCard({ label, value, change, changeLabel, icon: Icon, dela
 
   return (
     <div
-      className="card p-4 md:p-5 animate-fade-in-up"
+      className={`card p-5 md:p-6 animate-fade-in-up ${linkTo ? 'hover-lift' : ''}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between mb-2 md:mb-3">

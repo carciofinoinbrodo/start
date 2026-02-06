@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { GlobalSearch } from '../search/GlobalSearch';
 import { MobileNav } from './MobileNav';
 import { useBreakpoint } from '../../hooks/useMediaQuery';
@@ -56,18 +56,6 @@ export function Header({ title, subtitle }: HeaderProps) {
           {/* Desktop Search */}
           <div className="hidden md:block">
             <GlobalSearch />
-          </div>
-
-          {/* Notifications */}
-          <div className="relative group">
-            <button className="relative p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all duration-200 active:scale-95">
-              <Bell className="w-5 h-5" />
-              {/* Notification dot */}
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--orange-accent)] rounded-full" />
-            </button>
-            <div className="absolute right-0 top-full mt-2 px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-md">
-              Coming soon
-            </div>
           </div>
         </div>
       </div>

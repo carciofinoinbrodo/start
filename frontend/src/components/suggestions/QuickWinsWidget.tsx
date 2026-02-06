@@ -8,7 +8,11 @@ interface QuickWinsWidgetProps {
 
 function EffortBadge({ hours }: { hours: number }) {
   const label = hours <= 1 ? '< 1h' : hours <= 2 ? '~2h' : hours <= 4 ? '~4h' : `~${hours}h`;
-  const color = hours <= 2 ? 'text-green-700 bg-green-100' : hours <= 4 ? 'text-yellow-700 bg-yellow-100' : 'text-orange-700 bg-orange-100';
+  const color = hours <= 2
+    ? 'text-[var(--pastel-emerald-text)] bg-[var(--pastel-emerald)]'
+    : hours <= 4
+      ? 'text-[var(--pastel-amber-text)] bg-[var(--pastel-amber)]'
+      : 'text-[var(--orange-accent)] bg-[var(--orange-bg)]';
 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
@@ -52,7 +56,7 @@ function QuickWinItem({ win, index }: { win: QuickWinResponse; index: number }) 
             </p>
           )}
 
-          <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
+          <div className="flex items-center gap-1 mt-2 text-sm text-[var(--pastel-emerald-text)]">
             <CheckCircle2 className="w-3 h-3" />
             <span>{win.expected_outcome}</span>
           </div>
@@ -82,8 +86,8 @@ export function QuickWinsWidget({ quickWins }: QuickWinsWidgetProps) {
   return (
     <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-yellow-100">
-          <Zap className="w-5 h-5 text-yellow-600" />
+        <div className="p-2 rounded-lg bg-[var(--pastel-amber)]">
+          <Zap className="w-5 h-5 text-[var(--pastel-amber-text)]" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Quick Wins</h3>

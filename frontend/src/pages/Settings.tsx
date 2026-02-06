@@ -67,7 +67,7 @@ export function Settings() {
             </div>
             <div className="min-w-0">
               <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">Appearance</h2>
-              <p className="text-xs sm:text-sm text-[var(--text-muted)]">Customize how AiSEO looks</p>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)]">Customize how Visyble looks</p>
             </div>
           </div>
 
@@ -76,7 +76,7 @@ export function Settings() {
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <button
                 onClick={() => setTheme('light')}
-                className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border transition-all ${
                   theme === 'light'
                     ? 'border-[var(--accent-primary)] bg-[var(--accent-glow)]'
                     : 'border-[var(--border-visible)] hover:border-[var(--border-strong)]'
@@ -89,7 +89,7 @@ export function Settings() {
               </button>
               <button
                 onClick={() => setTheme('dark')}
-                className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border transition-all ${
                   theme === 'dark'
                     ? 'border-[var(--accent-primary)] bg-[var(--accent-glow)]'
                     : 'border-[var(--border-visible)] hover:border-[var(--border-strong)]'

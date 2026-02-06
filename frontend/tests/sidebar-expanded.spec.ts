@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Sidebar expanded shows new prompt button and pro tip', async ({ page }) => {
+test('Sidebar expanded shows pro tip and navigation', async ({ page }) => {
   // Set viewport wider to ensure sidebar is not collapsed
   await page.setViewportSize({ width: 1400, height: 900 });
 
@@ -14,10 +14,6 @@ test('Sidebar expanded shows new prompt button and pro tip', async ({ page }) =>
     await page.waitForTimeout(500);
   }
 
-  // Check for "New prompt" button
-  const newPromptButton = page.locator('button:has-text("New prompt")');
-  await expect(newPromptButton).toBeVisible();
-
   // Check for "Pro tip" card
   const proTip = page.locator('text=Pro tip');
   await expect(proTip).toBeVisible();
@@ -25,6 +21,10 @@ test('Sidebar expanded shows new prompt button and pro tip', async ({ page }) =>
   // Check for "Help & Support" link
   const helpLink = page.locator('text=Help & Support');
   await expect(helpLink).toBeVisible();
+
+  // Check for Visyble branding
+  const visybleBrand = page.locator('text=Visyble');
+  await expect(visybleBrand).toBeVisible();
 
   // Take a screenshot
   await page.screenshot({ path: 'tests/screenshots/sidebar-expanded.png', fullPage: true });
@@ -51,9 +51,9 @@ test('Sidebar shows collapsed state correctly', async ({ page }) => {
     await page.waitForTimeout(500);
   }
 
-  // Verify expanded elements are hidden
-  const newPromptButton = page.locator('button:has-text("New prompt")');
-  await expect(newPromptButton).not.toBeVisible();
+  // Verify expanded elements are hidden (Pro tip and branding text)
+  const proTip = page.locator('text=Pro tip');
+  await expect(proTip).not.toBeVisible();
 
   // Take a screenshot
   await page.screenshot({ path: 'tests/screenshots/sidebar-collapsed.png', fullPage: true });

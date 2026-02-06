@@ -7,10 +7,10 @@ interface ContentOpportunitiesTableProps {
 }
 
 const IMPACT_COLORS = {
-  critical: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
-  high: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
-  medium: { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-200' },
-  low: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
+  critical: { bg: 'bg-[#FEF2F2]', text: 'text-[#DC2626]', border: 'border-[#FECACA]' },
+  high: { bg: 'bg-[#FFF7ED]', text: 'text-[#EA580C]', border: 'border-[#FDBA74]' },
+  medium: { bg: 'bg-[#FFFBEB]', text: 'text-[#D97706]', border: 'border-[#FDE68A]' },
+  low: { bg: 'bg-[#ECFDF5]', text: 'text-[#059669]', border: 'border-[#A7F3D0]' },
 };
 
 const ACTION_ICONS = {
@@ -90,8 +90,8 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
           )}
 
           {opp.competitor_gap && (
-            <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
-              <span className="text-xs font-medium text-orange-700 uppercase tracking-wide">
+            <div className="p-3 rounded-lg bg-[#FFF7ED] border border-[#FDBA74]">
+              <span className="text-xs font-medium text-[#EA580C] uppercase tracking-wide">
                 Competitor Gap
               </span>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -122,8 +122,8 @@ export function ContentOpportunitiesTable({ opportunities }: ContentOpportunitie
       <div className="p-6 border-b border-[var(--border-subtle)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100">
-              <FileText className="w-5 h-5 text-blue-600" />
+            <div className="p-2 rounded-lg bg-[#EEF2FF]">
+              <FileText className="w-5 h-5 text-[#4F46E5]" />
             </div>
             <div>
               <h3 className="font-semibold text-[var(--text-primary)]">Content Opportunities</h3>

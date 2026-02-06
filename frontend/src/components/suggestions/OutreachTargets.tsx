@@ -6,11 +6,11 @@ interface OutreachTargetsProps {
 }
 
 const TYPE_CONFIG = {
-  publication: { icon: Newspaper, color: 'text-blue-600', bg: 'bg-blue-100' },
-  blog: { icon: Globe, color: 'text-green-600', bg: 'bg-green-100' },
-  podcast: { icon: Radio, color: 'text-purple-600', bg: 'bg-purple-100' },
-  community: { icon: MessageCircle, color: 'text-orange-600', bg: 'bg-orange-100' },
-  'review-site': { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+  publication: { icon: Newspaper, color: 'text-[#4F46E5]', bg: 'bg-[#EEF2FF]' },
+  blog: { icon: Globe, color: 'text-[#059669]', bg: 'bg-[#ECFDF5]' },
+  podcast: { icon: Radio, color: 'text-[#7C3AED]', bg: 'bg-[#F5F3FF]' },
+  community: { icon: MessageCircle, color: 'text-[#EA580C]', bg: 'bg-[#FFF7ED]' },
+  'review-site': { icon: Star, color: 'text-[#D97706]', bg: 'bg-[#FFFBEB]' },
 };
 
 function TargetCard({ target }: { target: OutreachTargetResponse }) {
@@ -60,8 +60,8 @@ export function OutreachTargets({ targets }: OutreachTargetsProps) {
   return (
     <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-blue-100">
-          <Globe className="w-5 h-5 text-blue-600" />
+        <div className="p-2 rounded-lg bg-[#EEF2FF]">
+          <Globe className="w-5 h-5 text-[#4F46E5]" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Outreach Targets</h3>
