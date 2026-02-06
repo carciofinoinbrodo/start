@@ -15,10 +15,10 @@ export function Header({ title, subtitle }: HeaderProps) {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-[var(--border-visible)] bg-[var(--bg-primary)]/95 backdrop-blur-sm px-4 md:px-8 py-3 md:py-4 animate-fade-in-down">
+    <header className="sticky top-0 z-40 border-b border-[var(--border-visible)] bg-[var(--bg-primary)]/95 backdrop-blur-sm px-4 md:px-8 py-3 md:py-4 animate-fade-in-down">
       {/* Mobile Search Overlay */}
       {showMobileSearch && isMobile && (
-        <div className="absolute inset-0 z-30 bg-[var(--bg-primary)] px-4 py-3 flex items-center gap-3 animate-fade-in">
+        <div className="absolute inset-0 z-50 bg-[var(--bg-primary)] px-4 py-3 flex items-center gap-3 animate-fade-in">
           <div className="flex-1">
             <GlobalSearch autoFocus onClose={() => setShowMobileSearch(false)} />
           </div>

@@ -699,7 +699,7 @@ export function Prompts() {
 
       <div className="p-4 md:p-6 lg:p-8">
         {/* AI Source Selector, Search and Add Button */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 animate-fade-in-up delay-100 relative z-20">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 animate-fade-in-up delay-100 relative z-10">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-1">
             {/* AI Source Selector */}
             <AISourceSelector
@@ -707,8 +707,8 @@ export function Prompts() {
               onSourceChange={setSelectedAISource}
             />
 
-            {/* Search Input */}
-            <div className="relative flex-1">
+            {/* Search Input - hidden on mobile, use GlobalSearch instead */}
+            <div className="relative flex-1 hidden sm:block">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 type="text"

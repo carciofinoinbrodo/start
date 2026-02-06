@@ -31,7 +31,7 @@ export function AISourceSelector({ selectedSource, onSourceChange }: AISourceSel
   };
 
   return (
-    <div className="relative z-20" ref={dropdownRef}>
+    <div className="relative z-10" ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -48,7 +48,7 @@ export function AISourceSelector({ selectedSource, onSourceChange }: AISourceSel
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full min-w-[220px] bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-xl shadow-lg overflow-hidden z-30 animate-fade-in">
+        <div className="absolute top-full left-0 mt-2 w-full min-w-[220px] bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-xl shadow-lg overflow-hidden z-20 animate-fade-in">
           <div className="py-1">
             {AI_SOURCES.map((source) => {
               const isSelected = source.id === selectedSource;

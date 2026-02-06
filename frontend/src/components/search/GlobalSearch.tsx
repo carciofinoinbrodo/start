@@ -102,7 +102,7 @@ export function GlobalSearch({ autoFocus, onClose }: GlobalSearchProps = {}) {
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-lg shadow-lg overflow-hidden z-[60] animate-fade-in">
           <SearchResults
             results={results}
             selectedIndex={selectedIndex}
