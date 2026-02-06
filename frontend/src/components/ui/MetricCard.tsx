@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router';
 import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useBreakpoint } from '../../hooks/useMediaQuery';
 
 interface MetricCardProps {
   label: string;
@@ -14,6 +15,8 @@ interface MetricCardProps {
   linkLabel?: string;
   secondaryValue?: string | number;
   secondaryLabel?: string;
+  /** Show compact version on mobile */
+  compactOnMobile?: boolean;
 }
 
 function easeOutCubic(t: number): number {
@@ -60,11 +63,14 @@ function useCountUp(end: number, duration: number = 600, delay: number = 0) {
   return count;
 }
 
-export function MetricCard({ label, value, change, changeLabel, icon: Icon, delay = 0, linkTo, linkLabel, secondaryValue, secondaryLabel }: MetricCardProps) {
+export function MetricCard({ label, value, change, changeLabel, icon: Icon, delay = 0, linkTo, linkLabel, secondaryValue, secondaryLabel, compactOnMobile = false }: MetricCardProps) {
+  const breakpoint = useBreakpoint();
+  const isMobile = breakpoint === 'mobile';
+  const isCompact = compactOnMobile && isMobile;
+
   const isPositive = change && change > 0;
   const isNegative = change && change < 0;
 
-  // Parse numeric value for animation
   const numericValue = typeof value === 'string'
     ? parseFloat(value.replace(/[^0-9.-]/g, ''))
     : value;
@@ -76,67 +82,96 @@ export function MetricCard({ label, value, change, changeLabel, icon: Icon, dela
 
   const animatedValue = useCountUp(numericValue, 600, delay + 200);
 
-  // Format the animated value
   const displayValue = Number.isInteger(numericValue)
     ? `${prefix}${Math.round(animatedValue)}${suffix}`
     : `${prefix}${animatedValue.toFixed(1)}${suffix}`;
 
+  // Compact mobile version - just the essentials
+  if (isCompact) {
+    return (
+      <div
+        className="card p-3 animate-fade-in-up"
+        style={{ animationDelay: `${delay}ms` }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-[var(--bg-hover)]">
+              <Icon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+            </div>
+            <p className="text-[11px] font-medium text-[var(--text-muted)]">{label}</p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {change !== undefined && (
+              <div className={`flex items-center ${
+                isPositive ? 'text-[var(--success)]' : isNegative ? 'text-[var(--danger)]' : 'text-[var(--text-muted)]'
+              }`}>
+                {isPositive && <TrendingUp className="w-3 h-3" />}
+                {isNegative && <TrendingDown className="w-3 h-3" />}
+                {!isPositive && !isNegative && <Minus className="w-3 h-3" />}
+              </div>
+            )}
+            <p className="text-lg font-semibold text-[var(--text-primary)]">{displayValue}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="glass-card p-6 animate-fade-in-up"
+      className="card p-4 md:p-5 animate-fade-in-up"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-[var(--text-muted)] mb-2">{label}</p>
-          <p className="text-metric">{displayValue}</p>
-        </div>
-        <div className="icon-glow">
-          <Icon className="w-5 h-5 text-[var(--accent-primary)]" />
+      <div className="flex items-start justify-between mb-2 md:mb-3">
+        <p className="text-[12px] md:text-[13px] font-medium text-[var(--text-muted)]">{label}</p>
+        <div className="p-1.5 md:p-2 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-subtle)]">
+          <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-[var(--text-muted)]" />
         </div>
       </div>
 
+      <p className="text-xl md:text-[28px] font-semibold text-[var(--text-primary)] tracking-tight">{displayValue}</p>
+
       {secondaryValue !== undefined && (
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--border-subtle)]">
-          <span className="text-lg font-semibold font-mono text-[var(--text-secondary)]">
+        <div className="flex items-center gap-2 mt-2 md:mt-3 pt-2 md:pt-3 border-t border-[var(--border-subtle)]">
+          <span className="text-sm md:text-base font-semibold font-mono text-[var(--text-secondary)]">
             {secondaryValue}
           </span>
           {secondaryLabel && (
-            <span className="text-sm text-[var(--text-muted)]">{secondaryLabel}</span>
+            <span className="text-xs md:text-sm text-[var(--text-muted)]">{secondaryLabel}</span>
           )}
         </div>
       )}
 
       {change !== undefined && (
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--border-subtle)]">
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
+        <div className="flex items-center gap-1.5 md:gap-2 mt-2 md:mt-3">
+          <div className={`flex items-center gap-1 text-xs md:text-sm font-medium ${
             isPositive
-              ? 'bg-[var(--success)]/10 text-[#4ade80]'
+              ? 'text-[var(--success)]'
               : isNegative
-                ? 'bg-[var(--danger)]/10 text-[#f87171]'
-                : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)]'
+                ? 'text-[var(--danger)]'
+                : 'text-[var(--text-muted)]'
           }`}>
-            {isPositive && <TrendingUp className="w-3.5 h-3.5" />}
-            {isNegative && <TrendingDown className="w-3.5 h-3.5" />}
-            {!isPositive && !isNegative && <Minus className="w-3.5 h-3.5" />}
-            <span className="text-sm font-semibold font-mono">
+            {isPositive && <TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" />}
+            {isNegative && <TrendingDown className="w-3 h-3 md:w-3.5 md:h-3.5" />}
+            {!isPositive && !isNegative && <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />}
+            <span>
               {isPositive && '+'}
               {change}
               {changeLabel}
             </span>
           </div>
-          <span className="text-xs text-[var(--text-muted)]">vs last month</span>
+          <span className="text-[10px] md:text-xs text-[var(--text-muted)]">vs last month</span>
         </div>
       )}
 
       {linkTo && (
-        <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+        <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-[var(--border-subtle)]">
           <Link
             to={linkTo}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-sm font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 w-full px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-[var(--border-visible)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs md:text-sm font-medium transition-all"
           >
             <span>{linkLabel || 'View'}</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5" />
           </Link>
         </div>
       )}

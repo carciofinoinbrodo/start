@@ -20,7 +20,6 @@ export function GlobalSearch({ autoFocus, onClose }: GlobalSearchProps = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Auto focus on mount if requested
   useEffect(() => {
     if (autoFocus) {
       inputRef.current?.focus();
@@ -30,18 +29,15 @@ export function GlobalSearch({ autoFocus, onClose }: GlobalSearchProps = {}) {
   const debouncedQuery = useDebounce(query, 300);
   const { results, totalResults } = useGlobalSearch(debouncedQuery);
 
-  // Flatten results for keyboard navigation
   const flatResults = results.flatMap((group) => group.results);
 
   useClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
-  // Open dropdown when results exist
   useEffect(() => {
     setIsOpen(debouncedQuery.length >= 2 && totalResults > 0);
     setSelectedIndex(-1);
   }, [debouncedQuery, totalResults]);
 
-  // Keyboard shortcut: Cmd/Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -98,16 +94,15 @@ export function GlobalSearch({ autoFocus, onClose }: GlobalSearchProps = {}) {
           onKeyDown={handleKeyDown}
           onFocus={() => debouncedQuery.length >= 2 && totalResults > 0 && setIsOpen(true)}
           placeholder="Search..."
-          className="input-dark pr-16 py-2 text-sm w-64"
-          style={{ paddingLeft: '2.5rem' }}
+          className="w-64 pl-10 pr-16 py-2 text-sm bg-[var(--bg-primary)] border border-[var(--border-visible)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-glow)] transition-all"
         />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-[var(--text-muted)] bg-[var(--bg-elevated)] rounded border border-[var(--border-subtle)]">
+        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-[var(--text-muted)] bg-[var(--bg-hover)] rounded border border-[var(--border-subtle)]">
           <Command className="w-2.5 h-2.5" />K
         </kbd>
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in">
           <SearchResults
             results={results}
             selectedIndex={selectedIndex}

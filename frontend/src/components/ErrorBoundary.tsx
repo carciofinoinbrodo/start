@@ -38,8 +38,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div className="min-h-[400px] flex items-center justify-center p-8">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-red-500/10 flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-red-400" />
+            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-red-100 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
             <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
               Something went wrong
@@ -67,10 +67,10 @@ export function AsyncErrorFallback({ error, onRetry }: { error: Error | null; on
   if (!error) return null;
 
   return (
-    <div className="glass-card p-8">
+    <div className="card p-8">
       <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-red-500/10 flex items-center justify-center">
-          <AlertTriangle className="w-8 h-8 text-red-400" />
+        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-red-100 flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8 text-red-600" />
         </div>
         <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
           Failed to load data

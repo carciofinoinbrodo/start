@@ -48,12 +48,12 @@ interface CachedData {
 
 function WidgetSkeleton() {
   return (
-    <div className="glass-card p-6 h-full animate-pulse">
-      <div className="h-6 w-1/3 bg-[var(--bg-tertiary)] rounded mb-4" />
+    <div className="card p-6 h-full animate-pulse">
+      <div className="h-6 w-1/3 bg-[var(--bg-hover)] rounded mb-4" />
       <div className="space-y-3">
-        <div className="h-4 w-full bg-[var(--bg-tertiary)] rounded" />
-        <div className="h-4 w-2/3 bg-[var(--bg-tertiary)] rounded" />
-        <div className="h-4 w-3/4 bg-[var(--bg-tertiary)] rounded" />
+        <div className="h-4 w-full bg-[var(--bg-hover)] rounded" />
+        <div className="h-4 w-2/3 bg-[var(--bg-hover)] rounded" />
+        <div className="h-4 w-3/4 bg-[var(--bg-hover)] rounded" />
       </div>
     </div>
   );
@@ -61,8 +61,8 @@ function WidgetSkeleton() {
 
 function WidgetError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="glass-card p-6 h-full border border-red-500/30">
-      <div className="flex items-center gap-3 text-red-400 mb-3">
+    <div className="card p-6 h-full border border-[var(--danger)]/30">
+      <div className="flex items-center gap-3 text-[var(--danger)] mb-3">
         <AlertCircle className="w-5 h-5" />
         <span className="font-medium">Failed to load</span>
       </div>
@@ -79,31 +79,33 @@ function WidgetError({ message, onRetry }: { message: string; onRetry: () => voi
 
 function EmptyState({ onGenerate, isAnyLoading }: { onGenerate: () => void; isAnyLoading: boolean }) {
   return (
-    <div className="glass-card p-12 text-center">
-      <div className="w-20 h-20 rounded-full bg-[var(--accent-primary)]/10 flex items-center justify-center mx-auto mb-6">
-        <Compass className="w-10 h-10 text-[var(--accent-primary)]" />
+    <div className="card p-8 sm:p-12 text-center animate-fade-in-up">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[var(--accent-glow)] flex items-center justify-center mx-auto mb-5 sm:mb-6">
+        <Compass className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--accent-primary)]" />
       </div>
-      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">
+      <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2 sm:mb-3">
         GEO Strategy Advisor
       </h2>
-      <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-6">
+      <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-md mx-auto mb-6">
         Generate AI-powered insights to improve your visibility in AI search results.
         Get specific, actionable recommendations based on your data.
       </p>
       <button
         onClick={onGenerate}
         disabled={isAnyLoading}
-        className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/80 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+        className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-[var(--accent-primary)] hover:bg-[#1d4ed8] text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg shadow-sm active:scale-98"
       >
         {isAnyLoading ? (
           <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Generating Strategy...
+            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+            <span className="hidden sm:inline">Generating Strategy...</span>
+            <span className="sm:hidden">Generating...</span>
           </>
         ) : (
           <>
-            <Sparkles className="w-5 h-5" />
-            Generate GEO Strategy
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Generate GEO Strategy</span>
+            <span className="sm:hidden">Generate Strategy</span>
           </>
         )}
       </button>
@@ -134,7 +136,6 @@ export function Suggestions() {
   });
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
 
-  // Load from cache on mount
   useEffect(() => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -153,7 +154,6 @@ export function Suggestions() {
     }
   }, []);
 
-  // Save to cache helper
   const saveToCache = (key: keyof CachedData, value: unknown) => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -193,7 +193,6 @@ export function Suggestions() {
   };
 
   const handleGenerateAll = () => {
-    // Launch all 6 calls in parallel
     generateSection(setSummary, () => generateStrategicSummary(brandId), 'summary');
     generateSection(setQuickWins, () => generateQuickWins(brandId), 'quickWins');
     generateSection(setContentOpps, () => generateContentOpportunities(brandId), 'contentOpps');
@@ -210,23 +209,23 @@ export function Suggestions() {
   const handleRetryOutreach = () => generateSection(setOutreach, () => generateOutreachTargets(brandId), 'outreach');
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[var(--bg-secondary)]">
       <Header
         title="GEO Strategy Advisor"
         subtitle="AI-powered insights for AI search visibility"
       />
 
-      <div className="p-4 md:p-8">
+      <div className="p-4 md:p-6 lg:p-8">
         {/* Regenerate Button - shown when any data exists */}
         {hasAnyData && (
-          <div className="glass-card p-4 mb-6 animate-fade-in-up">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-[var(--text-muted)]">
-                  Click regenerate to refresh all sections with fresh AI analysis
+          <div className="card p-3 sm:p-4 mb-4 sm:mb-6 animate-fade-in-up">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+                  Refresh all sections with fresh AI analysis
                 </p>
                 {cacheTimestamp && (
-                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                  <p className="text-[10px] sm:text-xs text-[var(--text-muted)] mt-0.5 sm:mt-1">
                     Last generated: {new Date(cacheTimestamp).toLocaleString()}
                   </p>
                 )}
@@ -234,17 +233,18 @@ export function Suggestions() {
               <button
                 onClick={handleGenerateAll}
                 disabled={isAnyLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/80 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-[var(--accent-primary)] hover:bg-[#1d4ed8] text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-98 flex-shrink-0"
               >
                 {isAnyLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating...
+                    <span className="hidden sm:inline">Generating...</span>
                   </>
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4" />
-                    Regenerate All
+                    <span className="hidden sm:inline">Regenerate All</span>
+                    <span className="sm:hidden">Refresh</span>
                   </>
                 )}
               </button>
@@ -259,7 +259,7 @@ export function Suggestions() {
 
         {/* Results Grid - shown when generating or has data */}
         {(hasAnyData || isAnyLoading) && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Strategic Summary */}
             <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
               {summary.status === 'loading' && <WidgetSkeleton />}
@@ -272,7 +272,7 @@ export function Suggestions() {
             </div>
 
             {/* Quick Wins & Technical Checklist */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
               <div className="animate-fade-in-up h-full" style={{ animationDelay: '50ms' }}>
                 {quickWins.status === 'loading' && <WidgetSkeleton />}
                 {quickWins.status === 'error' && (
@@ -305,7 +305,7 @@ export function Suggestions() {
             </div>
 
             {/* Competitor Gaps & Outreach Targets */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
               <div className="animate-fade-in-up h-full" style={{ animationDelay: '200ms' }}>
                 {competitorGaps.status === 'loading' && <WidgetSkeleton />}
                 {competitorGaps.status === 'error' && (

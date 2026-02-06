@@ -17,17 +17,17 @@ interface SentimentBadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  success: 'badge-glow badge-success',
-  warning: 'badge-glow badge-warning',
-  danger: 'badge-glow badge-danger',
+  success: 'badge-success',
+  warning: 'badge-warning',
+  danger: 'badge-danger',
   neutral: 'badge-neutral',
-  primary: 'badge-glow badge-primary',
+  primary: 'badge-primary',
 };
 
 export function Badge({ children, variant = 'neutral' }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${variantStyles[variant]}`}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${variantStyles[variant]}`}
     >
       {children}
     </span>

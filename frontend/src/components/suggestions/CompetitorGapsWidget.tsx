@@ -8,33 +8,33 @@ interface CompetitorGapsWidgetProps {
 
 const URGENCY_CONFIG = {
   immediate: {
-    color: 'text-red-400',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/30',
+    color: 'text-red-700',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
     icon: AlertCircle,
     label: 'Immediate'
   },
   'this-quarter': {
-    color: 'text-yellow-400',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    color: 'text-yellow-700',
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-200',
     icon: Clock,
     label: 'This Quarter'
   },
   'long-term': {
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/30',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
     icon: Calendar,
     label: 'Long-term'
   },
 };
 
 const GAP_TYPE_COLORS = {
-  content: 'bg-purple-500/20 text-purple-400',
-  authority: 'bg-blue-500/20 text-blue-400',
-  technical: 'bg-green-500/20 text-green-400',
-  sentiment: 'bg-orange-500/20 text-orange-400',
+  content: 'bg-purple-100 text-purple-700',
+  authority: 'bg-blue-100 text-blue-700',
+  technical: 'bg-green-100 text-green-700',
+  sentiment: 'bg-orange-100 text-orange-700',
 };
 
 function GapCard({ gap }: { gap: CompetitorGapResponse }) {
@@ -113,10 +113,10 @@ export function CompetitorGapsWidget({ gaps }: CompetitorGapsWidgetProps) {
   const longTermGaps = gaps.filter(g => g.urgency === 'long-term');
 
   return (
-    <div className="glass-card p-6 h-full">
+    <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-red-500/20">
-          <Users className="w-5 h-5 text-red-400" />
+        <div className="p-2 rounded-lg bg-red-100">
+          <Users className="w-5 h-5 text-red-600" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Competitor Gaps</h3>

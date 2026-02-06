@@ -31,24 +31,24 @@ export function AISourceSelector({ selectedSource, onSourceChange }: AISourceSel
   };
 
   return (
-    <div className="relative z-[200]" ref={dropdownRef}>
+    <div className="relative z-20" ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-all duration-200 min-w-[180px]"
+        className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-all duration-200 min-w-[140px] sm:min-w-[180px]"
       >
         <AISourceIconRenderer source={selectedSource} size={20} />
-        <span className="text-sm font-medium text-[var(--text-primary)] flex-1 text-left">
+        <span className="text-sm font-medium text-[var(--text-primary)] flex-1 text-left truncate">
           {selectedSourceInfo.name}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full min-w-[220px] bg-[#171719] border border-[var(--border-subtle)] rounded-xl shadow-2xl overflow-visible z-[9999] animate-fade-in">
+        <div className="absolute top-full left-0 mt-2 w-full min-w-[220px] bg-[var(--bg-card)] border border-[var(--border-visible)] rounded-xl shadow-lg overflow-hidden z-30 animate-fade-in">
           <div className="py-1">
             {AI_SOURCES.map((source) => {
               const isSelected = source.id === selectedSource;
@@ -60,8 +60,8 @@ export function AISourceSelector({ selectedSource, onSourceChange }: AISourceSel
                   onClick={() => handleSelect(source)}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 ${
                     isSelected
-                      ? 'bg-[var(--accent-primary)]/10'
-                      : 'hover:bg-[var(--bg-elevated)]'
+                      ? 'bg-[var(--accent-glow)]'
+                      : 'hover:bg-[var(--bg-hover)]'
                   }`}
                 >
                   <AISourceIconRenderer source={source.id} size={20} />
@@ -72,7 +72,7 @@ export function AISourceSelector({ selectedSource, onSourceChange }: AISourceSel
                       {source.name}
                     </span>
                     {!hasData && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--bg-hover)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
                         No data
                       </span>
                     )}

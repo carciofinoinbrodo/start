@@ -94,7 +94,7 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="glass-card">
+      <div className="card">
         <EmptyState
           icon={emptyIcon}
           title={emptyMessage}
@@ -109,7 +109,7 @@ export function DataTable<T>({
 
   return (
     <div
-      className="glass-card overflow-hidden animate-fade-in-up min-w-0"
+      className="card overflow-hidden animate-fade-in-up min-w-0"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       <div className="overflow-x-auto">

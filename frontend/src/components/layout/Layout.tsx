@@ -11,7 +11,7 @@ export function Layout() {
   const isMobile = breakpoint === 'mobile' || breakpoint === 'tablet';
 
   return (
-    <div className="flex min-h-screen bg-atmosphere">
+    <div className="flex min-h-screen bg-[var(--bg-secondary)]">
       {/* Desktop: Collapsible sidebar */}
       {!isMobile && (
         <Sidebar
@@ -33,7 +33,7 @@ export function Layout() {
         </>
       )}
 
-      <main className="flex-1 overflow-auto relative z-10">
+      <main className="flex-1 w-full overflow-y-auto overflow-x-hidden relative min-w-0">
         <Outlet />
       </main>
     </div>

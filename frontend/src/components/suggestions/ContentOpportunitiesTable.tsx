@@ -7,10 +7,10 @@ interface ContentOpportunitiesTableProps {
 }
 
 const IMPACT_COLORS = {
-  critical: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
-  high: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
-  medium: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  low: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
+  critical: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
+  high: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+  medium: { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-200' },
+  low: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
 };
 
 const ACTION_ICONS = {
@@ -27,7 +27,7 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
   return (
     <div className="border-b border-[var(--border-subtle)] last:border-b-0">
       <div
-        className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
+        className="flex items-center gap-4 p-4 cursor-pointer hover:bg-[var(--bg-hover)] transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className={`p-1.5 rounded ${impactStyle.bg}`}>
@@ -62,7 +62,7 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
 
       {expanded && (
         <div className="px-4 pb-4 space-y-3">
-          <div className="p-3 rounded-lg bg-[var(--bg-tertiary)]">
+          <div className="p-3 rounded-lg bg-[var(--bg-hover)]">
             <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
               Content Brief
             </span>
@@ -90,8 +90,8 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
           )}
 
           {opp.competitor_gap && (
-            <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-              <span className="text-xs font-medium text-orange-400 uppercase tracking-wide">
+            <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
+              <span className="text-xs font-medium text-orange-700 uppercase tracking-wide">
                 Competitor Gap
               </span>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -118,12 +118,12 @@ export function ContentOpportunitiesTable({ opportunities }: ContentOpportunitie
   });
 
   return (
-    <div className="glass-card overflow-hidden">
+    <div className="card overflow-hidden">
       <div className="p-6 border-b border-[var(--border-subtle)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <FileText className="w-5 h-5 text-blue-400" />
+            <div className="p-2 rounded-lg bg-blue-100">
+              <FileText className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <h3 className="font-semibold text-[var(--text-primary)]">Content Opportunities</h3>
@@ -141,7 +141,7 @@ export function ContentOpportunitiesTable({ opportunities }: ContentOpportunitie
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
                   filter === f
                     ? 'bg-[var(--accent-primary)] text-white'
-                    : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    : 'bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 {f}

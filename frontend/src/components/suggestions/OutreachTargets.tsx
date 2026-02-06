@@ -6,11 +6,11 @@ interface OutreachTargetsProps {
 }
 
 const TYPE_CONFIG = {
-  publication: { icon: Newspaper, color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  blog: { icon: Globe, color: 'text-green-400', bg: 'bg-green-500/20' },
-  podcast: { icon: Radio, color: 'text-purple-400', bg: 'bg-purple-500/20' },
-  community: { icon: MessageCircle, color: 'text-orange-400', bg: 'bg-orange-500/20' },
-  'review-site': { icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
+  publication: { icon: Newspaper, color: 'text-blue-600', bg: 'bg-blue-100' },
+  blog: { icon: Globe, color: 'text-green-600', bg: 'bg-green-100' },
+  podcast: { icon: Radio, color: 'text-purple-600', bg: 'bg-purple-100' },
+  community: { icon: MessageCircle, color: 'text-orange-600', bg: 'bg-orange-100' },
+  'review-site': { icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100' },
 };
 
 function TargetCard({ target }: { target: OutreachTargetResponse }) {
@@ -18,7 +18,7 @@ function TargetCard({ target }: { target: OutreachTargetResponse }) {
   const Icon = config.icon;
 
   return (
-    <div className="p-4 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] transition-colors">
+    <div className="p-4 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] transition-colors">
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg ${config.bg} flex-shrink-0`}>
           <Icon className={`w-4 h-4 ${config.color}`} />
@@ -58,10 +58,10 @@ export function OutreachTargets({ targets }: OutreachTargetsProps) {
   }, {} as Record<string, OutreachTargetResponse[]>);
 
   return (
-    <div className="glass-card p-6 h-full">
+    <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-cyan-500/20">
-          <Globe className="w-5 h-5 text-cyan-400" />
+        <div className="p-2 rounded-lg bg-blue-100">
+          <Globe className="w-5 h-5 text-blue-600" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Outreach Targets</h3>

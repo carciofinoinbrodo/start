@@ -8,7 +8,7 @@ interface QuickWinsWidgetProps {
 
 function EffortBadge({ hours }: { hours: number }) {
   const label = hours <= 1 ? '< 1h' : hours <= 2 ? '~2h' : hours <= 4 ? '~4h' : `~${hours}h`;
-  const color = hours <= 2 ? 'text-green-400 bg-green-500/20' : hours <= 4 ? 'text-yellow-400 bg-yellow-500/20' : 'text-orange-400 bg-orange-500/20';
+  const color = hours <= 2 ? 'text-green-700 bg-green-100' : hours <= 4 ? 'text-yellow-700 bg-yellow-100' : 'text-orange-700 bg-orange-100';
 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
@@ -22,7 +22,7 @@ function QuickWinItem({ win, index }: { win: QuickWinResponse; index: number }) 
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="p-4 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)]">
+    <div className="p-4 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-subtle)]">
       <div
         className="flex items-start gap-3 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
@@ -52,7 +52,7 @@ function QuickWinItem({ win, index }: { win: QuickWinResponse; index: number }) 
             </p>
           )}
 
-          <div className="flex items-center gap-1 mt-2 text-sm text-green-400">
+          <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
             <CheckCircle2 className="w-3 h-3" />
             <span>{win.expected_outcome}</span>
           </div>
@@ -80,10 +80,10 @@ function QuickWinItem({ win, index }: { win: QuickWinResponse; index: number }) 
 
 export function QuickWinsWidget({ quickWins }: QuickWinsWidgetProps) {
   return (
-    <div className="glass-card p-6 h-full">
+    <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-yellow-500/20">
-          <Zap className="w-5 h-5 text-yellow-400" />
+        <div className="p-2 rounded-lg bg-yellow-100">
+          <Zap className="w-5 h-5 text-yellow-600" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Quick Wins</h3>

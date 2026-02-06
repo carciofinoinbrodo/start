@@ -50,7 +50,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:simpleicons.org)",
       "WebFetch(domain:cdn.jsdelivr.net)",
-      "mcp__playwright__browser_network_requests"
+      "mcp__playwright__browser_network_requests",
+      "WebFetch(domain:www.saasui.design)"
     ]
   }
 }

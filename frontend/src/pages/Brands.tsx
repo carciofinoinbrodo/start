@@ -28,9 +28,9 @@ const TREND_ICONS = {
 };
 
 const TREND_COLORS = {
-  up: 'text-green-400',
-  down: 'text-red-400',
-  stable: 'text-gray-400',
+  up: 'text-[var(--success)]',
+  down: 'text-[var(--danger)]',
+  stable: 'text-[var(--text-muted)]',
 };
 
 const SENTIMENT_COLORS = {
@@ -98,20 +98,23 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-md p-6 m-4 animate-fade-in-up">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Add New Brand</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+      <div className="card w-full max-w-md overflow-hidden animate-scale-in">
+        {/* Modal Header - Campsite style */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add New Brand</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] transition-all"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        <div className="p-6">
+
         {error && (
-          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
             <AlertCircle className="w-4 h-4" />
             <span className="text-sm">{error}</span>
           </div>
@@ -126,7 +129,7 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
               type="text"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
+              className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
               placeholder="e.g., Adobe Commerce"
               required
             />
@@ -140,7 +143,7 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
               type="text"
               value={id}
               onChange={(e) => setId(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors font-mono text-sm"
+              className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors font-mono text-sm"
               placeholder="e.g., adobe-commerce"
               required
             />
@@ -157,7 +160,7 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
               type="text"
               value={variations}
               onChange={(e) => setVariations(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
+              className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
               placeholder="e.g., Adobe Commerce, Magento, magento.com"
             />
             <p className="text-xs text-[var(--text-muted)] mt-1">
@@ -173,7 +176,7 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as 'primary' | 'competitor')}
-                className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
               >
                 <option value="competitor">Competitor</option>
                 <option value="primary">Primary</option>
@@ -197,14 +200,14 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg)] transition-colors"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border-visible)] text-[var(--text-secondary)] font-medium hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all active:scale-98"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !name || !id}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--accent-primary)] text-white font-medium hover:bg-[var(--accent-primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--accent-primary)] text-white font-medium hover:bg-[#1d4ed8] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-98 shadow-sm"
             >
               {loading ? (
                 <>
@@ -212,15 +215,135 @@ function AddBrandModal({ isOpen, onClose, onAdd }: AddBrandModalProps) {
                   Adding...
                 </>
               ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Add Brand
-                </>
+                'Create'
               )}
             </button>
           </div>
         </form>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// Mobile card component for brands
+interface BrandMobileCardProps {
+  brand: BrandDetailResponse;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+function BrandMobileCard({ brand, isExpanded, onToggle }: BrandMobileCardProps) {
+  const trendKey = brand.trend as keyof typeof TREND_ICONS;
+  const TrendIcon = TREND_ICONS[trendKey] || TREND_ICONS.stable;
+  const trendColor = TREND_COLORS[trendKey] || TREND_COLORS.stable;
+  const sentimentStyle = SENTIMENT_COLORS[brand.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral;
+
+  return (
+    <div className={`mobile-list-item mobile-card-press bg-[var(--bg-primary)] border rounded-lg overflow-hidden animate-fade-in w-full ${
+      isExpanded ? 'border-[var(--border-accent)] shadow-sm' : 'border-[var(--border-subtle)]'
+    }`}>
+      <div
+        className="p-3 cursor-pointer"
+        onClick={onToggle}
+      >
+        {/* Compact single row with key info */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div
+              className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm"
+              style={{ backgroundColor: brand.color }}
+            />
+            <span className="text-sm font-medium text-[var(--text-primary)] truncate">{brand.name}</span>
+            {brand.type === 'primary' && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--accent-glow)] text-[var(--accent-primary)] font-semibold flex-shrink-0">
+                You
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-sm font-semibold text-data tabular-nums">{brand.visibility}%</span>
+            <TrendIcon className={`w-3.5 h-3.5 ${trendColor}`} />
+            {brand.topPrompts.length > 0 && (
+              <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                <ChevronRight className={`w-4 h-4 ${isExpanded ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Secondary info row - Campsite-style with pill badges */}
+        <div className="flex items-center gap-2 mt-2 pl-5">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[var(--bg-hover)] text-[10px] text-[var(--text-muted)]">
+            <span className="font-mono text-[var(--text-secondary)] tabular-nums">{brand.avgPosition > 0 ? `#${brand.avgPosition.toFixed(1)}` : '-'}</span>
+            <span className="ml-1">pos</span>
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[var(--bg-hover)] text-[10px] text-[var(--text-muted)]">
+            <span className="text-[var(--text-secondary)] tabular-nums">{brand.totalMentions}</span>
+            <span className="ml-1">mentions</span>
+          </span>
+          <span
+            className="px-2 py-0.5 rounded-full text-[10px] font-medium capitalize"
+            style={{ backgroundColor: sentimentStyle.bg, color: sentimentStyle.text }}
+          >
+            {brand.sentiment}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="px-4 pb-4 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)] animate-fade-in">
+          <div className="pt-4 space-y-4">
+            {/* Top Prompts */}
+            <div>
+              <h4 className="text-xs font-semibold text-[var(--text-primary)] mb-2">
+                Top Prompts
+              </h4>
+              <div className="space-y-1.5">
+                {brand.topPrompts.slice(0, 3).map((prompt, idx) => (
+                  <Link
+                    key={idx}
+                    to={`/prompts?query=${encodeURIComponent(prompt.query)}`}
+                    className="mobile-list-item block p-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-secondary)]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[var(--text-primary)]">"{prompt.query}"</span>
+                      {prompt.position && (
+                        <span className="text-xs font-mono text-[var(--accent-primary)] flex-shrink-0 tabular-nums">
+                          #{prompt.position}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+                {brand.topPrompts.length === 0 && (
+                  <p className="text-[var(--text-muted)] text-sm py-2">No prompts found</p>
+                )}
+              </div>
+            </div>
+
+            {/* Variations */}
+            {brand.variations.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-[var(--text-primary)] mb-2">
+                  Search Variations
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {brand.variations.map((v, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]"
+                    >
+                      {v}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -240,7 +363,7 @@ function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
   return (
     <>
       <tr
-        className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+        className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
         onClick={onToggle}
       >
         <td className="py-4 px-4">
@@ -258,12 +381,12 @@ function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
           <div className="flex items-center gap-3">
             <div
               className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: brand.color, boxShadow: `0 0 8px ${brand.color}40` }}
+              style={{ backgroundColor: brand.color }}
             />
             <div>
               <span className="font-medium text-[var(--text-primary)]">{brand.name}</span>
               {brand.type === 'primary' && (
-                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)]">
+                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[var(--accent-glow)] text-[var(--accent-primary)]">
                   You
                 </span>
               )}
@@ -300,7 +423,7 @@ function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
               >
                 <Trash2 className="w-4 h-4" />
               </button>
-              <div className="absolute right-0 top-full mt-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              <div className="absolute right-0 top-full mt-2 px-3 py-1.5 bg-[var(--bg-card)] shadow-md border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                 Hands off my database!
               </div>
             </div>
@@ -309,7 +432,7 @@ function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={8} className="bg-[var(--bg-tertiary)] px-8 py-6">
+          <td colSpan={8} className="bg-[var(--bg-hover)] px-8 py-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Prompts */}
               <div>
@@ -384,11 +507,11 @@ function BrandRow({ brand, isExpanded, onToggle }: BrandRowProps) {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#1a1f2e',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e5e7eb',
                           borderRadius: '8px',
                         }}
-                        itemStyle={{ color: '#e2e8f0' }}
+                        itemStyle={{ color: '#1f2937' }}
                         formatter={(value) => [`${value}%`, 'Visibility']}
                       />
                       <Area
@@ -501,8 +624,8 @@ export function Brands() {
       <div className="min-h-screen">
         <Header title="Brand Management" subtitle="Track and manage brands in AI responses" />
         <div className="p-8">
-          <div className="glass-card p-12 text-center">
-            <p className="text-red-400 mb-2">Failed to load brands data</p>
+          <div className="card p-12 text-center">
+            <p className="text-[var(--danger)] mb-2">Failed to load brands data</p>
             <p className="text-sm text-[var(--text-muted)]">
               Make sure the backend is running at {config.apiHost}
             </p>
@@ -515,24 +638,40 @@ export function Brands() {
   const totalBrands = data.brands.length;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full overflow-x-hidden">
       <Header title="Brand Management" subtitle="Track and manage brands in AI responses" />
 
       <div className="p-4 md:p-8">
         {/* Add Brand Button */}
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-end mb-4 sm:mb-6">
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--accent-primary)] text-white font-medium hover:bg-[var(--accent-primary)]/90 transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-[var(--accent-primary)] text-white text-sm sm:text-base font-medium hover:bg-[var(--accent-primary)]/90 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Add Brand
+            <span className="hidden sm:inline">Add Brand</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
 
-        {/* Brands Table */}
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3 mb-6 overflow-hidden">
+          <h3 className="text-base font-semibold text-[var(--text-primary)]">
+            All Brands ({totalBrands})
+          </h3>
+          {sortedBrands.map((brand) => (
+            <BrandMobileCard
+              key={brand.id}
+              brand={brand}
+              isExpanded={expandedBrands.has(brand.id)}
+              onToggle={() => toggleBrand(brand.id)}
+            />
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
         <div
-          className="glass-card p-6 animate-fade-in-up"
+          className="hidden md:block card p-6 animate-fade-in-up"
           style={{ animationDelay: '450ms' }}
         >
           <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
@@ -610,10 +749,10 @@ export function Brands() {
 
         {/* Info Note */}
         <div
-          className="glass-card p-6 mt-8 text-center animate-fade-in-up"
+          className="card p-4 sm:p-6 mt-6 sm:mt-8 text-center animate-fade-in-up"
           style={{ animationDelay: '600ms' }}
         >
-          <p className="text-[var(--text-muted)] text-sm">
+          <p className="text-[var(--text-muted)] text-xs sm:text-sm">
             Add new brands to track their mentions in AI responses. The system will automatically
             scan existing prompts and highlight mentions based on the search variations you provide.
           </p>

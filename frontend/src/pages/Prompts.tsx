@@ -67,7 +67,7 @@ function PromptRow({
                 style={{ width: `${prompt.visibility}%` }}
               />
             </div>
-            <span className="text-sm font-semibold font-mono text-[var(--text-data)]">
+            <span className="text-sm font-semibold font-mono text-[var(--text-primary)]">
               {prompt.visibility}%
             </span>
           </div>
@@ -90,7 +90,6 @@ function PromptRow({
                   className="w-7 h-7 rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center text-[10px] font-semibold text-white transition-transform hover:scale-110 hover:z-10"
                   style={{
                     backgroundColor: brand?.color || '#6B7280',
-                    boxShadow: `0 0 8px ${brand?.color || '#6B7280'}40`,
                   }}
                   title={mention.brandName}
                 >
@@ -99,7 +98,7 @@ function PromptRow({
               );
             })}
             {mentionedBrands.length > 4 && (
-              <div className="w-7 h-7 rounded-full border-2 border-[var(--bg-primary)] bg-[var(--bg-elevated)] flex items-center justify-center text-[10px] font-semibold text-[var(--text-muted)]">
+              <div className="w-7 h-7 rounded-full border-2 border-[var(--bg-primary)] bg-[var(--bg-hover)] flex items-center justify-center text-[10px] font-semibold text-[var(--text-muted)]">
                 +{mentionedBrands.length - 4}
               </div>
             )}
@@ -113,6 +112,157 @@ function PromptRow({
         />
       )}
     </>
+  );
+}
+
+// Compact mobile-friendly card view for prompts
+function PromptCard({
+  prompt,
+  isExpanded,
+  onToggle,
+  index,
+  brands
+}: {
+  prompt: PromptResponse;
+  isExpanded: boolean;
+  onToggle: () => void;
+  index: number;
+  brands: Brand[];
+}) {
+  const mentionedBrands = prompt.brands.filter((b) => b.mentioned);
+
+  return (
+    <div
+      className={`mobile-list-item mobile-card-press bg-[var(--bg-primary)] border rounded-lg p-3 animate-fade-in cursor-pointer ${
+        isExpanded ? 'border-[var(--border-accent)] shadow-sm' : 'border-[var(--border-subtle)]'
+      }`}
+      style={{ animationDelay: `${100 + index * 30}ms` }}
+      onClick={onToggle}
+    >
+      {/* Query + Visibility in one row */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2 min-w-0 flex-1">
+          <div className={`transition-transform duration-200 mt-0.5 flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}>
+            <ChevronRight className={`w-3.5 h-3.5 ${isExpanded ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+          </div>
+          <p className="text-sm font-medium text-[var(--text-primary)] line-clamp-2">{prompt.query}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-sm font-semibold text-data tabular-nums">{prompt.visibility}%</span>
+          <div className="w-10 h-1.5 bg-[var(--bg-hover)] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-500"
+              style={{ width: `${prompt.visibility}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Compact stats row */}
+      <div className="flex items-center gap-4 mt-2 pl-5">
+        <span className="text-xs text-[var(--text-muted)]">
+          <span className="font-mono text-[var(--text-secondary)] tabular-nums">{prompt.avgPosition > 0 ? `#${prompt.avgPosition}` : '-'}</span> pos
+        </span>
+        <span className="text-xs text-[var(--text-muted)]">
+          <span className="font-mono text-[var(--accent-primary)] tabular-nums">{prompt.totalRuns}</span> runs
+        </span>
+        <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center -space-x-1.5">
+            {mentionedBrands.slice(0, 3).map((mention) => {
+              const brand = brands.find((b) => b.id === mention.brandId);
+              return (
+                <div
+                  key={mention.brandId}
+                  className="w-5 h-5 rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center text-[8px] font-semibold text-white shadow-sm"
+                  style={{ backgroundColor: brand?.color || '#6B7280' }}
+                >
+                  {mention.brandName.charAt(0)}
+                </div>
+              );
+            })}
+          </div>
+          {mentionedBrands.length > 3 && (
+            <span className="text-[10px] text-[var(--text-muted)] ml-0.5">+{mentionedBrands.length - 3}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Expanded details */}
+      {isExpanded && (
+        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <ExpandedPromptDetailMobile queryId={prompt.id} brands={brands} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Simplified mobile expanded detail
+function ExpandedPromptDetailMobile({ queryId, brands }: { queryId: string; brands: Brand[] }) {
+  const idx = parseInt(queryId.replace('query-', '').replace('prompt-', ''));
+  const { data: detail, loading, error } = usePromptDetail(idx);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-4 text-[var(--text-muted)]">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">Loading...</span>
+      </div>
+    );
+  }
+
+  if (error || !detail) {
+    return <div className="text-center text-red-600 text-sm py-4">Failed to load details</div>;
+  }
+
+  const runs = detail.runs || [];
+  const latestRun = runs[0];
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-[var(--bg-hover)] rounded-lg p-3">
+          <div className="text-xs text-[var(--text-muted)]">Avg Visibility</div>
+          <div className="text-lg font-semibold text-[var(--text-primary)]">{detail.visibility}%</div>
+        </div>
+        <div className="bg-[var(--bg-hover)] rounded-lg p-3">
+          <div className="text-xs text-[var(--text-muted)]">Total Runs</div>
+          <div className="text-lg font-semibold text-[var(--accent-primary)]">{detail.totalRuns}</div>
+        </div>
+      </div>
+
+      {/* Brand Breakdown */}
+      {latestRun && (
+        <div>
+          <h4 className="text-xs font-semibold text-[var(--text-primary)] mb-2">Brand Mentions</h4>
+          <div className="space-y-2">
+            {latestRun.brands.map((mention) => {
+              const brand = brands.find((b) => b.id === mention.brandId);
+              return (
+                <div
+                  key={mention.brandId}
+                  className={`flex items-center justify-between p-2 rounded-lg ${
+                    mention.mentioned ? 'bg-[var(--bg-card)] border border-[var(--border-subtle)]' : 'bg-[var(--bg-hover)] opacity-60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: brand?.color || '#6B7280' }}
+                    />
+                    <span className="text-sm text-[var(--text-primary)]">{mention.brandName}</span>
+                  </div>
+                  <span className="text-xs font-mono text-[var(--text-muted)]">
+                    {mention.mentioned ? `#${mention.position}` : 'Not mentioned'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -146,7 +296,7 @@ function ExpandedPromptDetail({ queryId, brands }: { queryId: string; brands: Br
   if (loading) {
     return (
       <tr className="animate-fade-in">
-        <td colSpan={5} className="px-5 py-8 bg-[var(--bg-elevated)]/50">
+        <td colSpan={5} className="px-5 py-8 bg-[var(--bg-hover)]">
           <div className="flex items-center justify-center gap-2 text-[var(--text-muted)]">
             <Loader2 className="w-4 h-4 animate-spin" />
             Loading details...
@@ -159,8 +309,8 @@ function ExpandedPromptDetail({ queryId, brands }: { queryId: string; brands: Br
   if (error || !detail) {
     return (
       <tr className="animate-fade-in">
-        <td colSpan={5} className="px-5 py-8 bg-[var(--bg-elevated)]/50">
-          <div className="text-center text-red-400">Failed to load details</div>
+        <td colSpan={5} className="px-5 py-8 bg-[var(--bg-hover)]">
+          <div className="text-center text-red-600">Failed to load details</div>
         </td>
       </tr>
     );
@@ -171,13 +321,13 @@ function ExpandedPromptDetail({ queryId, brands }: { queryId: string; brands: Br
 
   return (
     <tr className="animate-fade-in">
-      <td colSpan={5} className="px-5 py-4 bg-[var(--bg-elevated)]/50">
+      <td colSpan={5} className="px-5 py-4 bg-[var(--bg-hover)]">
         <div className="pl-6 space-y-6">
           {/* Aggregated Stats */}
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-[var(--text-muted)]">Avg Visibility:</span>
-              <span className="font-semibold text-[var(--text-data)]">{detail.visibility}%</span>
+              <span className="font-semibold text-[var(--text-primary)]">{detail.visibility}%</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[var(--text-muted)]">Avg Position:</span>
@@ -206,7 +356,7 @@ function ExpandedPromptDetail({ queryId, brands }: { queryId: string; brands: Br
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedRunIndex === index
                           ? 'bg-[var(--accent-primary)] text-white'
-                          : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)]'
+                          : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)]'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -232,7 +382,7 @@ function ExpandedPromptDetail({ queryId, brands }: { queryId: string; brands: Br
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)]">Visibility: </span>
-                  <span className="font-semibold text-[var(--text-data)]">{selectedRun.visibility}%</span>
+                  <span className="font-semibold text-[var(--text-primary)]">{selectedRun.visibility}%</span>
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)]">Position: </span>
@@ -315,7 +465,7 @@ function BrandMentionCard({ mention, brands }: { mention: PromptBrandMention; br
       className={`p-4 rounded-xl border transition-all duration-200 ${
         mention.mentioned
           ? 'bg-[var(--bg-card)] border-[var(--border-subtle)] hover:border-[var(--border-accent)]'
-          : 'bg-[var(--bg-elevated)]/50 border-transparent opacity-60'
+          : 'bg-[var(--bg-hover)] border-transparent opacity-60'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
@@ -324,7 +474,6 @@ function BrandMentionCard({ mention, brands }: { mention: PromptBrandMention; br
             className="w-3 h-3 rounded-full"
             style={{
               backgroundColor: brand?.color || '#6B7280',
-              boxShadow: mention.mentioned ? `0 0 8px ${brand?.color || '#6B7280'}40` : 'none',
             }}
           />
           <span className="text-sm font-medium text-[var(--text-primary)]">{mention.brandName}</span>
@@ -356,7 +505,7 @@ function VisibilityHelpDialog({ isOpen, onClose }: { isOpen: boolean; onClose: (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -367,7 +516,7 @@ function VisibilityHelpDialog({ isOpen, onClose }: { isOpen: boolean; onClose: (
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">How Visibility Works</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[var(--bg-hover)] transition-colors"
           >
             <X className="w-5 h-5 text-[var(--text-muted)]" />
           </button>
@@ -381,7 +530,7 @@ function VisibilityHelpDialog({ isOpen, onClose }: { isOpen: boolean; onClose: (
           </p>
 
           {/* Formula */}
-          <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
+          <div className="bg-[var(--bg-hover)] rounded-xl p-4">
             <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Formula</h4>
             <code className="text-sm font-mono text-[var(--accent-primary)]">
               visibility = max(0, 100 - (position - 1) × 20)
@@ -409,7 +558,7 @@ function VisibilityHelpDialog({ isOpen, onClose }: { isOpen: boolean; onClose: (
             </div>
           </div>
 
-          <div className="bg-[var(--bg-elevated)] rounded-xl p-4">
+          <div className="bg-[var(--bg-hover)] rounded-xl p-4">
             <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Why 0% for position 6+?</h4>
             <p className="text-sm text-[var(--text-muted)]">
               Users rarely scroll past the first few recommendations. If your brand appears 6th or later, it's effectively invisible.
@@ -421,11 +570,11 @@ function VisibilityHelpDialog({ isOpen, onClose }: { isOpen: boolean; onClose: (
             <p className="text-sm text-[var(--text-secondary)] mb-3">
               When we run the same query multiple times, we average the scores.
             </p>
-            <div className="bg-[var(--bg-elevated)] rounded-xl p-4 text-sm font-mono text-[var(--text-muted)]">
+            <div className="bg-[var(--bg-hover)] rounded-xl p-4 text-sm font-mono text-[var(--text-muted)]">
               <div className="mb-2">Example: A query run 10 times</div>
               <div>• 7 times mentioned 2nd (80% each)</div>
               <div>• 3 times not mentioned (0% each)</div>
-              <div className="mt-2 text-[var(--text-data)] font-semibold">Average: (7×80 + 3×0) / 10 = 56%</div>
+              <div className="mt-2 text-[var(--text-primary)] font-semibold">Average: (7×80 + 3×0) / 10 = 56%</div>
             </div>
           </div>
         </div>
@@ -534,17 +683,24 @@ export function Prompts() {
 
   const isLoading = promptsLoading || brandsLoading;
 
+  // Calculate quick stats for mobile header
+  const promptQuickStats = prompts && prompts.length > 0 ? [
+    { label: 'Total', value: prompts.length },
+    { label: 'Avg Vis', value: `${Math.round(prompts.reduce((sum, p) => sum + p.visibility, 0) / prompts.length)}%` },
+  ] : undefined;
+
   return (
     <div className="min-h-screen">
       <Header
         title="Prompts"
         subtitle="View brand mentions across AI-generated responses"
+        quickStats={promptQuickStats}
       />
 
-      <div className="p-8">
+      <div className="p-4 md:p-6 lg:p-8">
         {/* AI Source Selector, Search and Add Button */}
-        <div className="flex items-center justify-between gap-4 mb-6 animate-fade-in-up delay-100 relative z-[100]">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 animate-fade-in-up delay-100 relative z-20">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-1">
             {/* AI Source Selector */}
             <AISourceSelector
               selectedSource={selectedAISource}
@@ -552,7 +708,7 @@ export function Prompts() {
             />
 
             {/* Search Input */}
-            <div className="relative max-w-md flex-1">
+            <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 type="text"
@@ -564,14 +720,14 @@ export function Prompts() {
               />
             </div>
           </div>
-          <div className="relative group/addprompt">
+          <div className="relative group/addprompt hidden sm:block">
             <button
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--accent-primary)] text-white font-medium opacity-50 cursor-not-allowed"
             >
               <Plus className="w-4 h-4" />
               Add Prompt
             </button>
-            <div className="absolute right-0 bottom-full mb-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover/addprompt:opacity-100 group-hover/addprompt:visible transition-all duration-200 z-50 shadow-lg">
+            <div className="absolute right-0 bottom-full mb-2 px-3 py-1.5 bg-[var(--bg-card)] shadow-md border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-muted)] whitespace-nowrap opacity-0 invisible group-hover/addprompt:opacity-100 group-hover/addprompt:visible transition-all duration-200 z-50">
               Coming soon!
             </div>
           </div>
@@ -582,15 +738,49 @@ export function Prompts() {
 
         {/* Error State */}
         {promptsError && (
-          <div className="glass-card p-12 text-center animate-fade-in">
-            <p className="text-red-400 mb-2">Failed to load data</p>
+          <div className="card p-12 text-center animate-fade-in">
+            <p className="text-red-600 mb-2">Failed to load data</p>
             <p className="text-sm text-[var(--text-muted)]">Make sure the backend is running at {config.apiHost}</p>
           </div>
         )}
 
-        {/* Table */}
+        {/* Mobile Card View */}
         {!isLoading && !promptsError && (
-          <div className="glass-card overflow-hidden animate-fade-in-up delay-150 relative z-[10]">
+          <div className="md:hidden space-y-3 animate-fade-in-up delay-150">
+            {filteredPrompts.map((prompt, index) => (
+              <PromptCard
+                key={prompt.id}
+                prompt={prompt}
+                isExpanded={expandedId === prompt.id}
+                onToggle={() => toggleExpanded(prompt.id)}
+                index={index}
+                brands={brands}
+              />
+            ))}
+            {filteredPrompts.length === 0 && (
+              <EmptyState
+                title={
+                  !sourceHasData
+                    ? `No data for this source`
+                    : searchQuery
+                    ? "No prompts found"
+                    : "No prompts yet"
+                }
+                description={
+                  !sourceHasData
+                    ? `Tracking for this AI source is coming soon.`
+                    : searchQuery
+                    ? `No prompts matching "${searchQuery}"`
+                    : "Run your first AI search analysis."
+                }
+              />
+            )}
+          </div>
+        )}
+
+        {/* Desktop Table */}
+        {!isLoading && !promptsError && (
+          <div className="hidden md:block card overflow-hidden animate-fade-in-up delay-150 relative z-[10]">
             <div className="overflow-x-auto">
               <table className="table-dark">
                 <thead>
@@ -617,7 +807,7 @@ export function Prompts() {
                             e.stopPropagation();
                             setShowHelpDialog(true);
                           }}
-                          className="p-0.5 rounded hover:bg-[var(--bg-elevated)] transition-colors"
+                          className="p-0.5 rounded hover:bg-[var(--bg-hover)] transition-colors"
                           title="How is visibility calculated?"
                         >
                           <HelpCircle className="w-3.5 h-3.5 text-[var(--text-muted)] hover:text-[var(--accent-primary)]" />
