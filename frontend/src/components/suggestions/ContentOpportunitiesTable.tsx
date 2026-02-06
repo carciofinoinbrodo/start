@@ -7,10 +7,26 @@ interface ContentOpportunitiesTableProps {
 }
 
 const IMPACT_COLORS = {
-  critical: { bg: 'bg-[#FEF2F2]', text: 'text-[#DC2626]', border: 'border-[#FECACA]' },
-  high: { bg: 'bg-[#FFF7ED]', text: 'text-[#EA580C]', border: 'border-[#FDBA74]' },
-  medium: { bg: 'bg-[#FFFBEB]', text: 'text-[#D97706]', border: 'border-[#FDE68A]' },
-  low: { bg: 'bg-[#ECFDF5]', text: 'text-[#059669]', border: 'border-[#A7F3D0]' },
+  critical: {
+    bg: 'bg-[var(--status-error-bg)]',
+    text: 'text-[var(--status-error-text)]',
+    border: 'border-[var(--status-error-border)]'
+  },
+  high: {
+    bg: 'bg-[var(--status-warning-bg)]',
+    text: 'text-[var(--status-warning-text)]',
+    border: 'border-[var(--status-warning-border)]'
+  },
+  medium: {
+    bg: 'bg-[var(--status-warning-bg)]',
+    text: 'text-[var(--status-warning-text)]',
+    border: 'border-[var(--status-warning-border)]'
+  },
+  low: {
+    bg: 'bg-[var(--status-success-bg)]',
+    text: 'text-[var(--status-success-text)]',
+    border: 'border-[var(--status-success-border)]'
+  },
 };
 
 const ACTION_ICONS = {
@@ -62,7 +78,7 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
 
       {expanded && (
         <div className="px-4 pb-4 space-y-3">
-          <div className="p-3 rounded-lg bg-[var(--bg-hover)]">
+          <div className="p-3 rounded-lg bg-[var(--container-subtle)]">
             <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
               Content Brief
             </span>
@@ -80,7 +96,7 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
                 {opp.target_queries.map((query, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-1 rounded bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] text-xs"
+                    className="px-2 py-1 rounded bg-[var(--accent-glow)] text-[var(--accent-primary)] text-xs"
                   >
                     "{query}"
                   </span>
@@ -90,8 +106,8 @@ function OpportunityRow({ opp }: { opp: ContentOpportunityResponse }) {
           )}
 
           {opp.competitor_gap && (
-            <div className="p-3 rounded-lg bg-[#FFF7ED] border border-[#FDBA74]">
-              <span className="text-xs font-medium text-[#EA580C] uppercase tracking-wide">
+            <div className="p-3 rounded-lg bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)]">
+              <span className="text-xs font-medium text-[var(--status-warning-text)] uppercase tracking-wide">
                 Competitor Gap
               </span>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -122,8 +138,8 @@ export function ContentOpportunitiesTable({ opportunities }: ContentOpportunitie
       <div className="p-6 border-b border-[var(--border-subtle)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#EEF2FF]">
-              <FileText className="w-5 h-5 text-[#4F46E5]" />
+            <div className="p-2 rounded-lg bg-[var(--icon-bg)]">
+              <FileText className="w-5 h-5 text-[var(--accent-primary)]" />
             </div>
             <div>
               <h3 className="font-semibold text-[var(--text-primary)]">Content Opportunities</h3>

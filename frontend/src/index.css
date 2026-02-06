@@ -60,6 +60,27 @@
   --orange-accent: #ea580c;
   --orange-bg: #fff7ed;
 
+  /* Semantic Status Colors - WCAG AA Compliant */
+  --status-success-bg: #DCFCE7;
+  --status-success-text: #166534;
+  --status-success-border: #BBF7D0;
+
+  --status-warning-bg: #FEF3C7;
+  --status-warning-text: #92400E;
+  --status-warning-border: #FDE68A;
+
+  --status-error-bg: #FEE2E2;
+  --status-error-text: #991B1B;
+  --status-error-border: #FECACA;
+
+  --status-info-bg: #E0E7FF;
+  --status-info-text: #3730A3;
+  --status-info-border: #C7D2FE;
+
+  /* Neutral Containers */
+  --container-subtle: #F9FAFB;
+  --icon-bg: #F3F4F6;
+
   /* Modern pastel palette for suggestion cards */
   --pastel-indigo: #EEF2FF;
   --pastel-indigo-accent: #E0E7FF;
@@ -156,6 +177,27 @@
   /* Orange accent for dark mode */
   --orange-accent: #f97316;
   --orange-bg: rgba(249, 115, 22, 0.12);
+
+  /* Semantic Status Colors - Dark mode */
+  --status-success-bg: rgba(22, 101, 52, 0.2);
+  --status-success-text: #4ADE80;
+  --status-success-border: rgba(74, 222, 128, 0.3);
+
+  --status-warning-bg: rgba(146, 64, 14, 0.2);
+  --status-warning-text: #FCD34D;
+  --status-warning-border: rgba(252, 211, 77, 0.3);
+
+  --status-error-bg: rgba(153, 27, 27, 0.2);
+  --status-error-text: #FCA5A5;
+  --status-error-border: rgba(252, 165, 165, 0.3);
+
+  --status-info-bg: rgba(55, 48, 163, 0.2);
+  --status-info-text: #A5B4FC;
+  --status-info-border: rgba(165, 180, 252, 0.3);
+
+  /* Neutral Containers */
+  --container-subtle: #1F1F23;
+  --icon-bg: #27272A;
 
   /* Brand Colors - Dark mode variants */
   --brand-chatgpt: #34d399;

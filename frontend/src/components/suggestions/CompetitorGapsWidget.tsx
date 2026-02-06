@@ -8,33 +8,33 @@ interface CompetitorGapsWidgetProps {
 
 const URGENCY_CONFIG = {
   immediate: {
-    color: 'text-[var(--pastel-rose-text)]',
-    bg: 'bg-[var(--pastel-rose)]',
-    border: 'border-[var(--pastel-rose-accent)]',
+    color: 'text-[var(--status-error-text)]',
+    borderColor: 'border-l-[var(--danger)]',
+    badgeBg: 'bg-[var(--status-error-bg)]',
     icon: AlertCircle,
     label: 'Immediate'
   },
   'this-quarter': {
-    color: 'text-[var(--pastel-amber-text)]',
-    bg: 'bg-[var(--pastel-amber)]',
-    border: 'border-[var(--pastel-amber-accent)]',
+    color: 'text-[var(--status-warning-text)]',
+    borderColor: 'border-l-[var(--warning)]',
+    badgeBg: 'bg-[var(--status-warning-bg)]',
     icon: Clock,
     label: 'This Quarter'
   },
   'long-term': {
-    color: 'text-[var(--pastel-indigo-text)]',
-    bg: 'bg-[var(--pastel-indigo)]',
-    border: 'border-[var(--pastel-indigo-accent)]',
+    color: 'text-[var(--status-info-text)]',
+    borderColor: 'border-l-[var(--accent-primary)]',
+    badgeBg: 'bg-[var(--status-info-bg)]',
     icon: Calendar,
     label: 'Long-term'
   },
 };
 
 const GAP_TYPE_COLORS = {
-  content: 'bg-[var(--pastel-violet)] text-[var(--pastel-violet-text)]',
-  authority: 'bg-[var(--pastel-indigo)] text-[var(--pastel-indigo-text)]',
-  technical: 'bg-[var(--pastel-emerald)] text-[var(--pastel-emerald-text)]',
-  sentiment: 'bg-[var(--orange-bg)] text-[var(--orange-accent)]',
+  content: 'bg-[var(--status-info-bg)] text-[var(--status-info-text)]',
+  authority: 'bg-[var(--status-info-bg)] text-[var(--status-info-text)]',
+  technical: 'bg-[var(--status-success-bg)] text-[var(--status-success-text)]',
+  sentiment: 'bg-[var(--status-warning-bg)] text-[var(--status-warning-text)]',
 };
 
 function GapCard({ gap }: { gap: CompetitorGapResponse }) {
@@ -43,7 +43,7 @@ function GapCard({ gap }: { gap: CompetitorGapResponse }) {
   const UrgencyIcon = urgencyConfig.icon;
 
   return (
-    <div className={`p-4 rounded-lg ${urgencyConfig.bg} border ${urgencyConfig.border}`}>
+    <div className={`p-4 rounded-lg bg-[var(--bg-card)] border border-[var(--border-visible)] border-l-4 ${urgencyConfig.borderColor}`}>
       <div
         className="cursor-pointer"
         onClick={() => setExpanded(!expanded)}
@@ -58,7 +58,7 @@ function GapCard({ gap }: { gap: CompetitorGapResponse }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`flex items-center gap-1 text-xs ${urgencyConfig.color}`}>
+            <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${urgencyConfig.color} ${urgencyConfig.badgeBg}`}>
               <UrgencyIcon className="w-3 h-3" />
               {urgencyConfig.label}
             </span>
@@ -115,8 +115,8 @@ export function CompetitorGapsWidget({ gaps }: CompetitorGapsWidgetProps) {
   return (
     <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-[var(--pastel-rose)]">
-          <Users className="w-5 h-5 text-[var(--pastel-rose-text)]" />
+        <div className="p-2 rounded-lg bg-[var(--icon-bg)]">
+          <Users className="w-5 h-5 text-[var(--accent-primary)]" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Competitor Gaps</h3>

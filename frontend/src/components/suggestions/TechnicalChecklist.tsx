@@ -9,31 +9,31 @@ interface TechnicalChecklistProps {
 const STATUS_CONFIG = {
   done: {
     icon: CheckCircle,
-    color: 'text-[var(--pastel-emerald-text)]',
-    bg: 'bg-[var(--pastel-emerald)]',
-    border: 'border-[var(--pastel-emerald-accent)]',
+    iconColor: 'text-[var(--success)]',
+    bg: 'bg-[var(--container-subtle)]',
+    border: 'border-[var(--border-subtle)]',
     label: 'Done',
   },
   missing: {
     icon: XCircle,
-    color: 'text-[var(--pastel-rose-text)]',
-    bg: 'bg-[var(--pastel-rose)]',
-    border: 'border-[var(--pastel-rose-accent)]',
+    iconColor: 'text-[var(--danger)]',
+    bg: 'bg-[var(--container-subtle)]',
+    border: 'border-[var(--border-subtle)]',
     label: 'Missing',
   },
   'needs-improvement': {
     icon: AlertTriangle,
-    color: 'text-[var(--pastel-amber-text)]',
-    bg: 'bg-[var(--pastel-amber)]',
-    border: 'border-[var(--pastel-amber-accent)]',
+    iconColor: 'text-[var(--warning)]',
+    bg: 'bg-[var(--container-subtle)]',
+    border: 'border-[var(--border-subtle)]',
     label: 'Needs Work',
   },
 };
 
 const PRIORITY_COLORS = {
-  critical: 'text-[var(--pastel-rose-text)]',
-  important: 'text-[var(--pastel-amber-text)]',
-  'nice-to-have': 'text-[var(--pastel-indigo-text)]',
+  critical: 'text-[var(--status-error-text)]',
+  important: 'text-[var(--status-warning-text)]',
+  'nice-to-have': 'text-[var(--status-info-text)]',
 };
 
 function CheckItem({ check }: { check: TechnicalCheckResponse }) {
@@ -48,13 +48,13 @@ function CheckItem({ check }: { check: TechnicalCheckResponse }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <StatusIcon className={`w-5 h-5 flex-shrink-0 ${statusConfig.color}`} />
+          <StatusIcon className={`w-5 h-5 flex-shrink-0 ${statusConfig.iconColor}`} />
           <div className="min-w-0">
             <p className="font-medium text-[var(--text-primary)] truncate">
               {check.check}
             </p>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className={`text-xs capitalize ${PRIORITY_COLORS[check.priority]}`}>
+              <span className={`text-xs font-medium capitalize ${PRIORITY_COLORS[check.priority]}`}>
                 {check.priority}
               </span>
               <span className="text-xs text-[var(--text-muted)]">
@@ -106,8 +106,8 @@ export function TechnicalChecklist({ checks }: TechnicalChecklistProps) {
     <div className="card p-6 h-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-[var(--pastel-slate)]">
-            <Wrench className="w-5 h-5 text-[var(--pastel-slate-text)]" />
+          <div className="p-2 rounded-lg bg-[var(--icon-bg)]">
+            <Wrench className="w-5 h-5 text-[var(--accent-primary)]" />
           </div>
           <div>
             <h3 className="font-semibold text-[var(--text-primary)]">Technical GEO Checklist</h3>
@@ -129,7 +129,7 @@ export function TechnicalChecklist({ checks }: TechnicalChecklistProps) {
 
       <div className="w-full h-2 bg-[var(--bg-hover)] rounded-full mb-4 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#059669] to-[#34D399] rounded-full transition-all duration-500"
+          className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-500"
           style={{ width: `${percentage}%` }}
         />
       </div>

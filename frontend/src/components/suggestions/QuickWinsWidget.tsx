@@ -9,10 +9,10 @@ interface QuickWinsWidgetProps {
 function EffortBadge({ hours }: { hours: number }) {
   const label = hours <= 1 ? '< 1h' : hours <= 2 ? '~2h' : hours <= 4 ? '~4h' : `~${hours}h`;
   const color = hours <= 2
-    ? 'text-[var(--pastel-emerald-text)] bg-[var(--pastel-emerald)]'
+    ? 'text-[var(--status-success-text)] bg-[var(--status-success-bg)]'
     : hours <= 4
-      ? 'text-[var(--pastel-amber-text)] bg-[var(--pastel-amber)]'
-      : 'text-[var(--orange-accent)] bg-[var(--orange-bg)]';
+      ? 'text-[var(--status-warning-text)] bg-[var(--status-warning-bg)]'
+      : 'text-[var(--status-error-text)] bg-[var(--status-error-bg)]';
 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
@@ -26,7 +26,7 @@ function QuickWinItem({ win, index }: { win: QuickWinResponse; index: number }) 
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="p-4 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-subtle)]">
+    <div className="p-4 rounded-lg bg-[var(--container-subtle)] border border-[var(--border-subtle)]">
       <div
         className="flex items-start gap-3 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
@@ -56,8 +56,8 @@ function QuickWinItem({ win, index }: { win: QuickWinResponse; index: number }) 
             </p>
           )}
 
-          <div className="flex items-center gap-1 mt-2 text-sm text-[var(--pastel-emerald-text)]">
-            <CheckCircle2 className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 mt-2 text-sm text-[var(--text-secondary)]">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[var(--success)]" />
             <span>{win.expected_outcome}</span>
           </div>
         </div>
@@ -86,8 +86,8 @@ export function QuickWinsWidget({ quickWins }: QuickWinsWidgetProps) {
   return (
     <div className="card p-6 h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-[var(--pastel-amber)]">
-          <Zap className="w-5 h-5 text-[var(--pastel-amber-text)]" />
+        <div className="p-2 rounded-lg bg-[var(--icon-bg)]">
+          <Zap className="w-5 h-5 text-[var(--accent-primary)]" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--text-primary)]">Quick Wins</h3>
