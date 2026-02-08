@@ -224,12 +224,6 @@ export function Dashboard() {
 
   const isLoading = brandsLoading || sourcesLoading || metricsLoading || visibilityLoading;
 
-  // Quick stats for mobile header
-  const quickStats = metricsData ? [
-    { label: 'Visibility', value: `${metricsData.visibility.value}%`, trend: (metricsData.visibility.change ?? 0) > 0 ? 'up' as const : (metricsData.visibility.change ?? 0) < 0 ? 'down' as const : 'stable' as const },
-    { label: 'Position', value: `#${metricsData.avgPosition.value}`, trend: (metricsData.avgPosition.change ?? 0) < 0 ? 'up' as const : (metricsData.avgPosition.change ?? 0) > 0 ? 'down' as const : 'stable' as const },
-  ] : undefined;
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--bg-secondary)]">
@@ -264,7 +258,6 @@ export function Dashboard() {
       <Header
         title="Dashboard"
         subtitle="Track how AI search engines cite your brand vs competitors"
-        quickStats={quickStats}
       />
 
       <div className="p-3 md:p-6 lg:p-8">

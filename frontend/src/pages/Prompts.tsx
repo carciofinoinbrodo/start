@@ -683,18 +683,11 @@ export function Prompts() {
 
   const isLoading = promptsLoading || brandsLoading;
 
-  // Calculate quick stats for mobile header
-  const promptQuickStats = prompts && prompts.length > 0 ? [
-    { label: 'Total', value: prompts.length },
-    { label: 'Avg Vis', value: `${Math.round(prompts.reduce((sum, p) => sum + p.visibility, 0) / prompts.length)}%` },
-  ] : undefined;
-
   return (
     <div className="min-h-screen">
       <Header
         title="Prompts"
         subtitle="View brand mentions across AI-generated responses"
-        quickStats={promptQuickStats}
       />
 
       <div className="p-4 md:p-6 lg:p-8">
