@@ -221,15 +221,9 @@ export function KanbanBoard({ brandId = 'wix' }: KanbanBoardProps) {
       {/* Kanban columns */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto pb-4">
-          <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <KanbanColumn status="todo" recommendations={todoRecs} />
-          </div>
-          <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            <KanbanColumn status="in_progress" recommendations={inProgressRecs} />
-          </div>
-          <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-            <KanbanColumn status="done" recommendations={doneRecs} />
-          </div>
+          <KanbanColumn status="todo" recommendations={todoRecs} />
+          <KanbanColumn status="in_progress" recommendations={inProgressRecs} />
+          <KanbanColumn status="done" recommendations={doneRecs} />
         </div>
       </DragDropContext>
 

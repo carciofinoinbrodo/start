@@ -33,7 +33,7 @@ export function RecommendationCard({ recommendation, isDragging, dragHandleProps
       {...dragHandleProps}
       className={`
         bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg
-        transition-all duration-200 overflow-hidden cursor-grab active:cursor-grabbing
+        transition-shadow duration-200 overflow-hidden cursor-grab active:cursor-grabbing
         ${isDragging ? 'shadow-lg ring-2 ring-[var(--accent-primary)] opacity-90' : 'hover:border-[var(--border-accent)] hover:shadow-sm'}
       `}
     >
