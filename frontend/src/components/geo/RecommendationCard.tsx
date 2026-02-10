@@ -9,17 +9,17 @@ interface RecommendationCardProps {
 }
 
 const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
-  content: { bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-300 dark:border-blue-600' },
-  technical: { bg: 'bg-purple-100 dark:bg-purple-900/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-300 dark:border-purple-600' },
-  outreach: { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-600' },
-  competitive: { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-600' },
+  content: { bg: 'bg-[var(--pastel-indigo)]', text: 'text-[var(--pastel-indigo-text)]', border: 'border-[var(--pastel-indigo-accent)]' },
+  technical: { bg: 'bg-[var(--pastel-violet)]', text: 'text-[var(--pastel-violet-text)]', border: 'border-[var(--pastel-violet-accent)]' },
+  outreach: { bg: 'bg-[var(--pastel-emerald)]', text: 'text-[var(--pastel-emerald-text)]', border: 'border-[var(--pastel-emerald-accent)]' },
+  competitive: { bg: 'bg-[var(--pastel-amber)]', text: 'text-[var(--pastel-amber-text)]', border: 'border-[var(--pastel-amber-accent)]' },
 };
 
 const priorityConfig: Record<string, { bg: string; text: string; label: string }> = {
-  critical: { bg: 'bg-red-100 dark:bg-red-900/40', text: 'text-red-700 dark:text-red-300', label: 'Critical' },
-  high: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300', label: 'High' },
-  medium: { bg: 'bg-yellow-100 dark:bg-yellow-900/40', text: 'text-yellow-700 dark:text-yellow-300', label: 'Medium' },
-  low: { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-600 dark:text-slate-300', label: 'Low' },
+  critical: { bg: 'bg-[var(--status-error-bg)]', text: 'text-[var(--status-error-text)]', label: 'Critical' },
+  high: { bg: 'bg-[var(--pastel-rose)]', text: 'text-[var(--pastel-rose-text)]', label: 'High' },
+  medium: { bg: 'bg-[var(--status-warning-bg)]', text: 'text-[var(--status-warning-text)]', label: 'Medium' },
+  low: { bg: 'bg-[var(--pastel-slate)]', text: 'text-[var(--pastel-slate-text)]', label: 'Low' },
 };
 
 export function RecommendationCard({ recommendation, isDragging, dragHandleProps }: RecommendationCardProps) {
@@ -64,7 +64,7 @@ export function RecommendationCard({ recommendation, isDragging, dragHandleProps
               </span>
 
               {/* Effort */}
-              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700">
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-[var(--text-secondary)] bg-[var(--bg-hover)]">
                 <Clock className="w-3 h-3" />
                 {recommendation.effort}
               </span>
