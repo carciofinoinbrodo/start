@@ -503,3 +503,53 @@ class TechnicalChecksList(BaseModel):
 class OutreachTargetsList(BaseModel):
     """Wrapper for LLM to generate list of outreach targets"""
     items: list[OutreachTarget]
+
+
+# --- Unified GEO Recommendations (Kanban) ---
+
+class Recommendation(BaseModel):
+    """Single prioritized GEO recommendation for Kanban board"""
+    id: str = Field(description="Unique identifier (UUID)")
+    rank: int = Field(ge=1, le=10, description="Priority rank 1-10 (1 is highest priority)")
+    title: str = Field(description="Short action title (e.g., 'Add FAQ schema to pricing page')")
+    description: str = Field(description="Detailed explanation of the recommendation")
+    category: Literal["content", "technical", "outreach", "competitive"] = Field(
+        description="Category of the recommendation"
+    )
+    priority: Literal["critical", "high", "medium", "low"] = Field(
+        description="Priority level"
+    )
+    effort: str = Field(description="Effort estimate (e.g., '2-4 hours', '1-2 days')")
+    status: Literal["todo", "in_progress", "done"] = Field(
+        default="todo",
+        description="Current completion status"
+    )
+    steps: list[str] = Field(
+        default=[],
+        description="Optional step-by-step implementation guide"
+    )
+
+
+class RecommendationLLMOutput(BaseModel):
+    """LLM output wrapper for generating recommendations"""
+    recommendations: list[Recommendation] = Field(
+        description="Exactly 10 prioritized recommendations covering all categories"
+    )
+
+
+class RecommendationsResponse(BaseModel):
+    """Response for GET/POST /api/geo/recommendations"""
+    brand: str = Field(description="Brand being analyzed")
+    generated_at: datetime = Field(description="When recommendations were generated")
+    model_used: str = Field(description="LLM model used")
+    recommendations: list[Recommendation] = Field(description="10 prioritized recommendations")
+    progress: dict = Field(
+        description="Progress stats: {todo: int, in_progress: int, done: int}"
+    )
+
+
+class RecommendationStatusUpdate(BaseModel):
+    """Request body for PATCH /api/geo/recommendations/{id}/status"""
+    status: Literal["todo", "in_progress", "done"] = Field(
+        description="New status for the recommendation"
+    )

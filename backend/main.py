@@ -10,7 +10,7 @@ from collections import Counter
 from itertools import groupby
 
 from database import create_db_and_tables, get_session
-from models import Brand, Prompt, PromptBrandMention, Source, PromptSource, PromptEmbedding, CachedSuggestion
+from models import Brand, Prompt, PromptBrandMention, Source, PromptSource, PromptEmbedding, CachedSuggestion, RecommendationProgress
 from schemas import (
     BrandResponse,
     PromptResponse,
@@ -59,6 +59,11 @@ from schemas import (
     CompetitorGapsList,
     TechnicalChecksList,
     OutreachTargetsList,
+    # Unified Recommendations (Kanban)
+    Recommendation,
+    RecommendationLLMOutput,
+    RecommendationsResponse,
+    RecommendationStatusUpdate,
 )
 
 app = FastAPI(title="AiSEO API", version="1.0.0")
@@ -2074,3 +2079,242 @@ Return JSON with an "items" array containing the targets."""
     except Exception as e:
         logger.error(f"Error generating outreach targets: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Unified GEO Recommendations API (Kanban Board)
+# ============================================================================
+
+@app.post("/api/geo/recommendations", response_model=RecommendationsResponse)
+async def generate_recommendations(
+    brand_id: str = "wix",
+    force_refresh: bool = False,
+    session: Session = Depends(get_session)
+):
+    """
+    Generate 10 prioritized GEO recommendations in a single API call.
+    Returns recommendations with their current completion status from database.
+    """
+    import logging
+    import uuid
+    logger = logging.getLogger(__name__)
+
+    brand, llm_client, brand_context, analysis_context, LLMRateLimitError = await _get_geo_context(session, brand_id)
+
+    # Check for existing recommendations in cache (reuse CachedSuggestion with type marker)
+    cache_key = f"recommendations_v1_{brand_id}"
+    if not force_refresh:
+        cached = session.exec(
+            select(CachedSuggestion)
+            .where(CachedSuggestion.brand_id == brand_id)
+            .where(CachedSuggestion.suggestions_json.contains('"type": "kanban_recommendations"'))
+            .where(CachedSuggestion.expires_at > datetime.utcnow())
+        ).first()
+
+        if cached:
+            import json
+            cached_data = json.loads(cached.suggestions_json)
+            recommendations = cached_data.get("recommendations", [])
+
+            # Merge with current status from RecommendationProgress
+            for rec in recommendations:
+                progress = session.get(RecommendationProgress, rec["id"])
+                if progress:
+                    rec["status"] = progress.status
+
+            # Calculate progress stats
+            progress_stats = {
+                "todo": sum(1 for r in recommendations if r["status"] == "todo"),
+                "in_progress": sum(1 for r in recommendations if r["status"] == "in_progress"),
+                "done": sum(1 for r in recommendations if r["status"] == "done"),
+            }
+
+            return RecommendationsResponse(
+                brand=brand.name,
+                generated_at=cached.generated_at,
+                model_used=cached.model_used,
+                recommendations=[Recommendation(**r) for r in recommendations],
+                progress=progress_stats
+            )
+
+    # Generate new recommendations via LLM
+    # IMPORTANT: Keep prompt concise to avoid response truncation
+    section_prompt = """Generate exactly 10 GEO recommendations. KEEP RESPONSES SHORT.
+
+Each recommendation:
+- id: UUID string
+- rank: 1-10 (1=highest priority)
+- title: Max 10 words
+- description: ONE sentence, max 20 words
+- category: "content" | "technical" | "outreach" | "competitive"
+- priority: "critical" | "high" | "medium" | "low"
+- effort: Short format ("2h", "4h", "1d", "3d", "1w")
+- status: "todo"
+- steps: Exactly 2 brief steps, max 12 words each
+
+Distribution: 3 content, 3 technical, 2 outreach, 2 competitive
+Priorities: 2 critical, 3 high, 3 medium, 2 low
+
+Be SPECIFIC but BRIEF. Reference actual data.
+
+Return JSON: {"recommendations": [...]}"""
+
+    try:
+        result = await llm_client.generate_section(
+            section_name="recommendations",
+            section_prompt=section_prompt,
+            analysis_context=analysis_context,
+            brand_context=brand_context,
+            schema=RecommendationLLMOutput
+        )
+
+        recommendations = result.recommendations
+
+        # Ensure all have valid UUIDs
+        for rec in recommendations:
+            if not rec.id or len(rec.id) < 10:
+                rec.id = str(uuid.uuid4())
+            rec.status = "todo"  # New recommendations always start as todo
+
+        # Cache the recommendations
+        import json
+        cache_data = {
+            "type": "kanban_recommendations",
+            "recommendations": [r.model_dump() for r in recommendations]
+        }
+
+        # Remove old cache
+        old_cache = session.exec(
+            select(CachedSuggestion)
+            .where(CachedSuggestion.brand_id == brand_id)
+            .where(CachedSuggestion.suggestions_json.contains('"type": "kanban_recommendations"'))
+        ).all()
+        for old in old_cache:
+            session.delete(old)
+
+        # Create new cache entry
+        cache_hours = int(os.getenv("SUGGESTIONS_CACHE_HOURS", "24"))
+        new_cache = CachedSuggestion(
+            brand_id=brand_id,
+            suggestions_json=json.dumps(cache_data),
+            generated_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(hours=cache_hours),
+            model_used="claude-sonnet-4-5"
+        )
+        session.add(new_cache)
+
+        # Clear old progress entries for this brand (new recommendations = fresh start)
+        old_progress = session.exec(
+            select(RecommendationProgress).where(RecommendationProgress.brand_id == brand_id)
+        ).all()
+        for old in old_progress:
+            session.delete(old)
+
+        session.commit()
+
+        progress_stats = {"todo": 10, "in_progress": 0, "done": 0}
+
+        return RecommendationsResponse(
+            brand=brand.name,
+            generated_at=datetime.utcnow(),
+            model_used="claude-sonnet-4-5",
+            recommendations=recommendations,
+            progress=progress_stats
+        )
+
+    except LLMRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating recommendations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/api/geo/recommendations/{recommendation_id}/status")
+async def update_recommendation_status(
+    recommendation_id: str,
+    update: RecommendationStatusUpdate,
+    session: Session = Depends(get_session)
+):
+    """Update the status of a recommendation (todo/in_progress/done)."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Get or create progress entry
+    progress = session.get(RecommendationProgress, recommendation_id)
+
+    if progress:
+        progress.status = update.status
+        progress.updated_at = datetime.utcnow()
+    else:
+        # Need to find the brand_id from cached recommendations
+        # Search all caches to find which brand this recommendation belongs to
+        caches = session.exec(
+            select(CachedSuggestion)
+            .where(CachedSuggestion.suggestions_json.contains(recommendation_id))
+        ).all()
+
+        if not caches:
+            raise HTTPException(status_code=404, detail="Recommendation not found")
+
+        brand_id = caches[0].brand_id
+
+        progress = RecommendationProgress(
+            id=recommendation_id,
+            brand_id=brand_id,
+            status=update.status,
+            updated_at=datetime.utcnow()
+        )
+        session.add(progress)
+
+    session.commit()
+    session.refresh(progress)
+
+    return {
+        "id": progress.id,
+        "status": progress.status,
+        "updated_at": progress.updated_at.isoformat()
+    }
+
+
+@app.get("/api/geo/recommendations/{brand_id}")
+async def get_recommendations(
+    brand_id: str,
+    session: Session = Depends(get_session)
+):
+    """Get cached recommendations for a brand (without regenerating)."""
+    import json
+
+    cached = session.exec(
+        select(CachedSuggestion)
+        .where(CachedSuggestion.brand_id == brand_id)
+        .where(CachedSuggestion.suggestions_json.contains('"type": "kanban_recommendations"'))
+    ).first()
+
+    if not cached:
+        raise HTTPException(status_code=404, detail="No recommendations found. Generate first with POST.")
+
+    cached_data = json.loads(cached.suggestions_json)
+    recommendations = cached_data.get("recommendations", [])
+
+    # Merge with current status
+    for rec in recommendations:
+        progress = session.get(RecommendationProgress, rec["id"])
+        if progress:
+            rec["status"] = progress.status
+
+    progress_stats = {
+        "todo": sum(1 for r in recommendations if r["status"] == "todo"),
+        "in_progress": sum(1 for r in recommendations if r["status"] == "in_progress"),
+        "done": sum(1 for r in recommendations if r["status"] == "done"),
+    }
+
+    brand = session.get(Brand, brand_id)
+    brand_name = brand.name if brand else brand_id
+
+    return RecommendationsResponse(
+        brand=brand_name,
+        generated_at=cached.generated_at,
+        model_used=cached.model_used,
+        recommendations=[Recommendation(**r) for r in recommendations],
+        progress=progress_stats
+    )

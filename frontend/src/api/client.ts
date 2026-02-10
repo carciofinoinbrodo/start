@@ -501,3 +501,74 @@ export async function generateTechnicalChecklist(brandId: string = 'wix'): Promi
 export async function generateOutreachTargets(brandId: string = 'wix'): Promise<OutreachTargetsSectionResponse> {
   return fetchGeoSection<OutreachTargetsSectionResponse>('outreach-targets', brandId);
 }
+
+// ============================================================================
+// Unified GEO Recommendations (Kanban Board)
+// ============================================================================
+
+export interface Recommendation {
+  id: string;
+  rank: number;
+  title: string;
+  description: string;
+  category: 'content' | 'technical' | 'outreach' | 'competitive';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  effort: string;
+  status: 'todo' | 'in_progress' | 'done';
+  steps: string[];
+}
+
+export interface RecommendationsResponse {
+  brand: string;
+  generated_at: string;
+  model_used: string;
+  recommendations: Recommendation[];
+  progress: {
+    todo: number;
+    in_progress: number;
+    done: number;
+  };
+}
+
+export async function generateRecommendations(
+  brandId: string = 'wix',
+  forceRefresh: boolean = false
+): Promise<RecommendationsResponse> {
+  const response = await fetch(
+    `${API_BASE}/geo/recommendations?brand_id=${brandId}&force_refresh=${forceRefresh}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API error: ${response.status}` }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getRecommendations(brandId: string = 'wix'): Promise<RecommendationsResponse> {
+  const response = await fetch(`${API_BASE}/geo/recommendations/${brandId}`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API error: ${response.status}` }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateRecommendationStatus(
+  recommendationId: string,
+  status: 'todo' | 'in_progress' | 'done'
+): Promise<{ id: string; status: string; updated_at: string }> {
+  const response = await fetch(`${API_BASE}/geo/recommendations/${recommendationId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API error: ${response.status}` }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+  return response.json();
+}

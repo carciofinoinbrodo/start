@@ -98,6 +98,14 @@ class CachedSuggestion(SQLModel, table=True):
     model_used: str  # e.g., "claude-sonnet-4.5" or "gpt-5.1"
 
 
+class RecommendationProgress(SQLModel, table=True):
+    """Tracks completion status of GEO recommendations per brand"""
+    id: str = Field(primary_key=True)  # recommendation UUID
+    brand_id: str = Field(foreign_key="brand.id", index=True)
+    status: str = Field(default="todo")  # todo | in_progress | done
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # Dynamically add vector column to PromptEmbedding if pgvector is available
 if PGVECTOR_AVAILABLE and Vector is not None:
     # Add the embedding column with pgvector type
